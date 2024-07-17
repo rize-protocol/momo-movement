@@ -1,0 +1,13 @@
+{
+  "name": "movement-gaming",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "compile": "aptos move compile --skip-fetch-latest-git-deps",
+    "deploy": "aptos move publish",
+    "test": "aptos move test --package-dir sources/gaming --skip-fetch-latest-git-deps"
+  },
+  "author": "",
+  "license": "ISC"
+}

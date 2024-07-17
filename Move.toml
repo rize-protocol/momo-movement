@@ -1,0 +1,11 @@
+[package]
+name = 'movementGaming'
+version = '0.0.1'
+
+[addresses]
+movement_gaming = '0x35e4af79704020cf660cfc1af4541b187cdd8786483c0ef17c11b8abb4917097'
+test_admin = '0xaa'
+test_attacker = '0xcc'
+
+[dependencies]
+AptosFramework = { git = 'https://github.com/aptos-labs/aptos-core.git', subdir = 'aptos-move/framework/aptos-framework/', rev = 'mainnet' }
