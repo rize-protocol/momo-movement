@@ -20,7 +20,8 @@ module movement_gaming::gaming {
     use movement_gaming::role;
 
     // error codes
-    const E_RESOURCE_ACCOUNT_NOT_EXIST: u64 = 1;
+    const E_RESOURCE_ACCOUNT_ALREADY_EXIST: u64 = 1;
+    const E_RESOURCE_ACCOUNT_NOT_EXIST: u64 = 2;
 
     struct ResourceAccountCreateEvent has drop, store {
         resource_address: address
@@ -48,7 +49,7 @@ module movement_gaming::gaming {
         })
     }
 
-    public fun find_or_create_resource_account(sender: &signer, user_account_hash: string::String): address acquires Gaming {
+    public fun create_resource_account(sender: &signer, user_account_hash: string::String): address acquires Gaming {
         only_admin(sender);
 
         // calculate resource address.
@@ -56,16 +57,25 @@ module movement_gaming::gaming {
         let resource_address = account::create_resource_address(&signer::address_of(sender), user_account_bytes);
 
         let gaming = borrow_global_mut<Gaming>(@movement_gaming);
+        assert!(!table_with_length::contains(&gaming.resource_account_mapping, resource_address), E_RESOURCE_ACCOUNT_ALREADY_EXIST);
 
-        if (!table_with_length::contains(&gaming.resource_account_mapping, resource_address)) {
-            let user_account_bytes = bcs::to_bytes(&user_account_hash);
-            let (_, resource_signer_cap) = account::create_resource_account(sender, user_account_bytes);
-            table_with_length::add(&mut gaming.resource_account_mapping, resource_address, resource_signer_cap);
+        let user_account_bytes = bcs::to_bytes(&user_account_hash);
+        let (_, resource_signer_cap) = account::create_resource_account(sender, user_account_bytes);
+        table_with_length::add(&mut gaming.resource_account_mapping, resource_address, resource_signer_cap);
 
-            event::emit_event<ResourceAccountCreateEvent>(&mut gaming.resource_account_create_events, ResourceAccountCreateEvent {
-                resource_address,
-            });
-        };
+        event::emit_event<ResourceAccountCreateEvent>(&mut gaming.resource_account_create_events, ResourceAccountCreateEvent {
+            resource_address,
+        });
+
+        resource_address
+    }
+
+    public fun try_get_user_resource_account(sender: &signer, user_account_hash: string::String): address acquires Gaming {
+        let user_account_bytes = bcs::to_bytes(&user_account_hash);
+        let resource_address = account::create_resource_address(&signer::address_of(sender), user_account_bytes);
+
+        let gaming = borrow_global<Gaming>(@movement_gaming);
+        assert!(table_with_length::contains(&gaming.resource_account_mapping, resource_address), E_RESOURCE_ACCOUNT_NOT_EXIST);
 
         resource_address
     }
@@ -117,23 +127,23 @@ module movement_gaming::gaming {
     }
 
     #[test(deployer=@movement_gaming)]
-    fun test_find_or_create_resource_account(deployer: &signer) acquires Gaming {
+    fun test_get_or_create_resource_account(deployer: &signer) acquires Gaming {
         init_for_testing(deployer);
 
         let user_account_hash = utf8(b"hello world");
-        let resource_address = find_or_create_resource_account(deployer, user_account_hash);
+        let resource_address1 = create_resource_account(deployer, user_account_hash);
 
-        let gaming = borrow_global<Gaming>(@movement_gaming);
-        assert!(table_with_length::contains(&gaming.resource_account_mapping, resource_address), 0);
+        let resource_address2 = try_get_user_resource_account(deployer, user_account_hash);
+        assert!(resource_address1 == resource_address2, 0);
     }
 
     #[test(deployer = @movement_gaming, attacker = @test_attacker)]
     #[expected_failure]
-    fun test_find_or_create_resource_account_by_attacker(deployer: &signer, attacker: &signer) acquires Gaming {
+    fun test_get_or_create_resource_account_by_attacker(deployer: &signer, attacker: &signer) acquires Gaming {
         init_for_testing(deployer);
 
         let user_account_hash = utf8(b"hello world");
-        find_or_create_resource_account(attacker, user_account_hash);
+        create_resource_account(attacker, user_account_hash);
     }
 
     #[test(deployer=@movement_gaming)]
@@ -141,7 +151,7 @@ module movement_gaming::gaming {
         init_for_testing(deployer);
 
         let user_account_hash = utf8(b"hello world");
-        let resource_address = find_or_create_resource_account(deployer, user_account_hash);
+        let resource_address = create_resource_account(deployer, user_account_hash);
 
         let coin_balance_before_deposit = coin::balance<momo_coin::Coin>(resource_address);
         assert!(coin_balance_before_deposit == 0, 0);
@@ -166,7 +176,7 @@ module movement_gaming::gaming {
     fun test_transfer(deployer: &signer) acquires Gaming {
         init_for_testing(deployer);
 
-        let resource_address1 = find_or_create_resource_account(deployer, utf8(b"addr1"));
+        let resource_address1 = create_resource_account(deployer, utf8(b"addr1"));
         let reciver = &account::create_account_for_test(@test_attacker);
 
 
@@ -187,8 +197,8 @@ module movement_gaming::gaming {
     fun test_referral_bouns(deployer: &signer) acquires Gaming {
         init_for_testing(deployer);
 
-        let resource_address1 = find_or_create_resource_account(deployer, utf8(b"addr1"));
-        let resource_address2 = find_or_create_resource_account(deployer, utf8(b"addr2"));
+        let resource_address1 = create_resource_account(deployer, utf8(b"addr1"));
+        let resource_address2 = create_resource_account(deployer, utf8(b"addr2"));
 
         let amount = 100_000_000;
         referral_bouns(deployer, resource_address1, resource_address2, amount);
