@@ -75,9 +75,8 @@ module movement_gaming::gaming {
         resource_address
     }
 
-    // REVIEW: user_account_hash -> use the hash of { 'type': 'telegram', 'telegram_id': '12345' }
+    // REVIEW: user_account_hash -> use the hash of JSON `{ 'type': 'telegram', 'telegram_id': '12345' }`
     //         and our backend keeps the reverse map.
-    // REVIEW: No return
     public fun try_get_user_resource_account(sender: &signer, user_account_hash: string::String): address acquires Gaming {
         let user_account_bytes = bcs::to_bytes(&user_account_hash);
         let resource_address = account::create_resource_address(&signer::address_of(sender), user_account_bytes);
@@ -120,6 +119,7 @@ module movement_gaming::gaming {
 
         let inviter_cap = table_with_length::borrow(&gaming.resource_account_mapping, inviter);
         let inviter_signer = &account::create_signer_with_capability(inviter_cap);
+        // REVIEW: rename mint_internal
         momo_coin::mint_to(inviter_signer, amount);
 
         let invitee_cap = table_with_length::borrow(&gaming.resource_account_mapping, invitee);
