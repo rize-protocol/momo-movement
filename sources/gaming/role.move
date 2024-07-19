@@ -11,6 +11,8 @@ module movement_gaming::role {
     const ZERO_ADDRESS: address = @0x0;
 
     struct Role has key {
+        // REVIEW: Consider one admin and multiple operator considering parallelism
+        //   in backend. Admin can add / remove operator.
         admin: address,
         pending_admin: address,
         transfer_admin_events: EventHandle<address>,

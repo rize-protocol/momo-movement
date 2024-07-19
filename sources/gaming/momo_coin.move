@@ -63,6 +63,7 @@ module movement_gaming::momo_coin {
     }
 
     public(friend) fun transfer(from: &signer, to: address, amount: u64)  acquires CoinCapabilities {
+        // REVIEW: Does coin transfer interface requires the `to` account being created before transfer?
         coin::transfer<Coin>(from, to, amount);
 
         let capabilities = borrow_global_mut<CoinCapabilities>(@movement_gaming);

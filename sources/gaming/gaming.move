@@ -1,3 +1,4 @@
+// REVIEW: Suggest rename repository to momo_movement
 module movement_gaming::gaming {
     use std::bcs;
     use std::signer;
@@ -27,16 +28,19 @@ module movement_gaming::gaming {
         resource_address: address
     }
 
+    // REVIEW: Typo
     struct ReferralBounsEvent has drop, store {
         inviter: address,
         invitee: address,
         amount: u64
     }
 
+    // REVIEW: Suggest rename to MomoGlobals/MomoConfig
     struct Gaming has key {
         resource_account_mapping: TableWithLength<address, SignerCapability>,
 
         resource_account_create_events: EventHandle<ResourceAccountCreateEvent>,
+        // REVIEW: Typo: evnets
         referral_bonus_evnets: EventHandle<ReferralBounsEvent>,
     }
 
@@ -67,9 +71,13 @@ module movement_gaming::gaming {
             resource_address,
         });
 
+        // REVIEW: There is no point to return a value here.
         resource_address
     }
 
+    // REVIEW: user_account_hash -> use the hash of { 'type': 'telegram', 'telegram_id': '12345' }
+    //         and our backend keeps the reverse map.
+    // REVIEW: No return
     public fun try_get_user_resource_account(sender: &signer, user_account_hash: string::String): address acquires Gaming {
         let user_account_bytes = bcs::to_bytes(&user_account_hash);
         let resource_address = account::create_resource_address(&signer::address_of(sender), user_account_bytes);
@@ -102,6 +110,7 @@ module movement_gaming::gaming {
         momo_coin::transfer(from_signer, to, amount);
     }
 
+    // REVIEW: Only add some points for inviter
     public fun referral_bouns(sender: &signer, inviter: address, invitee: address, amount: u64) acquires Gaming {
         only_admin(sender);
 
