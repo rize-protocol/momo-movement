@@ -1,11 +1,12 @@
-module movement_gaming::momo_coin {
+module momo_movement::momo_coin {
     use std::signer;
     use std::string::utf8;
     use aptos_framework::account;
+    use aptos_framework::aptos_account;
     use aptos_framework::coin;
     use aptos_framework::event;
 
-    friend movement_gaming::gaming;
+    friend momo_movement::momo;
 
     struct Coin {}
 
@@ -47,10 +48,10 @@ module movement_gaming::momo_coin {
         });
     }
 
-    public(friend) fun mint_to(receipt: &signer, amount: u64)  acquires CoinCapabilities {
+    public(friend) fun mint_internal(receipt: &signer, amount: u64)  acquires CoinCapabilities {
         let receipt_addr = signer::address_of(receipt);
 
-        let capabilities = borrow_global_mut<CoinCapabilities>(@movement_gaming);
+        let capabilities = borrow_global_mut<CoinCapabilities>(@momo_movement);
         let coin = coin::mint<Coin>(amount, &capabilities.mint);
 
         try_register_coin(receipt);
@@ -63,10 +64,9 @@ module movement_gaming::momo_coin {
     }
 
     public(friend) fun transfer(from: &signer, to: address, amount: u64)  acquires CoinCapabilities {
-        // REVIEW: Does coin transfer interface requires the `to` account being created before transfer?
-        coin::transfer<Coin>(from, to, amount);
+        aptos_account::transfer_coins<Coin>(from, to, amount);
 
-        let capabilities = borrow_global_mut<CoinCapabilities>(@movement_gaming);
+        let capabilities = borrow_global_mut<CoinCapabilities>(@momo_movement);
         event::emit_event<TransferEvent>(&mut capabilities.transfer_events, TransferEvent {
             from: signer::address_of(from),
             to,
@@ -81,20 +81,20 @@ module movement_gaming::momo_coin {
         }
     }
 
-    #[test(deployer=@movement_gaming)]
+    #[test(deployer=@momo_movement)]
     fun test_init(deployer: &signer) {
         init_for_testing(deployer);
         assert!(exists<CoinCapabilities>(signer::address_of(deployer)), 0);
     }
 
-    #[test(deployer=@movement_gaming)]
+    #[test(deployer=@momo_movement)]
     fun test_mint(deployer: &signer) acquires CoinCapabilities {
         init_for_testing(deployer);
         let balance_before_mint = coin::balance<Coin>(signer::address_of(deployer));
         assert!(balance_before_mint == 0, 0);
 
         let amount = 100_000_000;
-        mint_to(deployer, amount);
+        mint_internal(deployer, amount);
 
         let balance_after_mint = coin::balance<Coin>(signer::address_of(deployer));
         assert!(balance_after_mint == amount, 1);
