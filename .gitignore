@@ -1,3 +1,10 @@
-.idea
 core/build
 .aptos
+**/.idea
+**/.txt
+**/coverage
+**/dist
+**/node_modules
+**/*.log
+**/.yalc
+**/.yalc.lock
