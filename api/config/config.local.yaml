@@ -1,0 +1,26 @@
+database:
+  name: movement_gaming_local
+  host: 127.0.0.1
+  port: 3306
+  username:
+    source: use-value
+    value: movement
+  password:
+    source: use-value
+    value: movement
+  logging: false
+
+redis:
+  host: 127.0.0.1
+  port: 6379
+
+telegram:
+  botToken: 7247785922:AAENaaIib6wDDJG_B5zsPkANjyy6QHchqI8
+
+secret-manager:
+  region: us-west-1
+
+monitoring:
+  metricsNamespace: Movement-gaming
+  region: us-west-1
+  env: local
