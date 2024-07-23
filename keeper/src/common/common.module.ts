@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import * as Entities from 'movement-gaming-model';
 
@@ -32,6 +33,7 @@ export class SecretManagerModule {}
       }),
     }),
     TypeOrmModule.forFeature(Object.values(Entities)),
+    ScheduleModule.forRoot(),
   ],
   providers: [ConfigService, SecretManagerService, TimeService, RedisService, MetricsService],
   exports: [ConfigService, SecretManagerService, TimeService, RedisService, MetricsService],

@@ -28,6 +28,9 @@ core-contract:
     source: use-value
     value: '0x0042175eb3b903621e3549046fb0641a8206d619fd065fb8a0abaf9f33437bcd'
 
+relayer:
+  commandRedisKey: 'momo-command-list'
+
 monitoring:
   metricsNamespace: Movement-gaming
   region: us-west-1

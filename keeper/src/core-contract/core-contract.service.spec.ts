@@ -165,4 +165,14 @@ describe('coreContractService test', () => {
     const balanceAfterBonus = await coreContractService.momoBalance(resourceAccount!);
     expect(balanceAfterBonus.minus(balanceBeforeBonus).isEqualTo(referralAmount)).toBeTruthy();
   });
+
+  it('resource account exist', async () => {
+    const userAccountHash = 'hash_test1';
+    await testService.tryCreateResourceAccount(userAccountHash);
+    const resourceAccount = await coreContractService.tryGetUserResourceAccount(userAccountHash);
+    expect(resourceAccount).toBeDefined();
+
+    const exist = await coreContractService.resourceAccountExists(resourceAccount!);
+    expect(exist).toBeTruthy();
+  });
 });

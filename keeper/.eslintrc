@@ -78,7 +78,8 @@
         "class-methods-use-this": "off",
         "curly": ["error", "all"],
         "no-console": "off",
-        "@typescript-eslint/no-use-before-define": "off"
+        "@typescript-eslint/no-use-before-define": "off",
+        "no-constant-condition": "off"
     },
     "settings": {
         "import/resolver": {

@@ -78,6 +78,12 @@ module momo_movement::momo {
     }
 
     #[view]
+    public fun resource_account_exists(resource_account: address) : bool acquires MomoGlobals {
+        let global = borrow_global<MomoGlobals>(@momo_movement);
+        table_with_length::contains(&global.resource_account_mapping, resource_account)
+    }
+
+    #[view]
     public fun momo_balance(resource_account: address): u64 {
         coin::balance<momo_coin::Coin>(resource_account)
     }

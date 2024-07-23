@@ -51,6 +51,16 @@ export class CoreContractService {
     return new BigNumber(balance as string).div(10 ** this.decimals);
   }
 
+  async resourceAccountExists(resourceAccount: string) {
+    const [exists] = await this.aptos.view({
+      payload: {
+        function: `${this.contractId}::momo::resource_account_exists`,
+        functionArguments: [resourceAccount],
+      },
+    });
+    return exists as boolean;
+  }
+
   async createResourceAccount(userAccountHash: string) {
     return this.aptos.transaction.build.simple({
       sender: this.walletService.admin.accountAddress,
