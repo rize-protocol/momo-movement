@@ -1,0 +1,34 @@
+database:
+  name: movement_gaming_local
+  host: 127.0.0.1
+  port: 3306
+  username:
+    source: use-value
+    value: movement
+  password:
+    source: use-value
+    value: movement
+  logging: false
+
+redis:
+  host: 127.0.0.1
+  port: 6379
+
+secret-manager:
+  region: us-west-1
+
+aptos:
+  clientUrl: https://aptos.testnet.suzuka.movementlabs.xyz/v1
+  network: testnet
+
+core-contract:
+  contractId: '0x9815296865239bb63f4952c6add4b75a0924c3af52c2bbfca9cdc403b7bdbc97'
+  decimals: 6
+  adminPrivateKey:
+    source: use-value
+    value: '0x0042175eb3b903621e3549046fb0641a8206d619fd065fb8a0abaf9f33437bcd'
+
+monitoring:
+  metricsNamespace: Movement-gaming
+  region: us-west-1
+  env: local

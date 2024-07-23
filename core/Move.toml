@@ -3,7 +3,7 @@ name = 'momoMovement'
 version = '0.0.1'
 
 [addresses]
-momo_movement = '0x0ff15561341365ea41fe38bc19c357570d291abc03bf4b9adfba6ce6a05549d8'
+momo_movement = '0x9815296865239bb63f4952c6add4b75a0924c3af52c2bbfca9cdc403b7bdbc97'
 test_admin = '0xaa'
 test_attacker = '0xcc'
 

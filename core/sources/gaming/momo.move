@@ -7,11 +7,12 @@ module momo_movement::momo {
     use aptos_std::table_with_length::TableWithLength;
     use aptos_framework::account;
     use aptos_framework::account::{SignerCapability};
+    use aptos_framework::coin;
     use aptos_framework::event;
     use aptos_framework::event::EventHandle;
 
     use momo_movement::momo_coin;
-    use momo_movement::role::only_admin;
+    use momo_movement::role::{only_admin, get_admin};
 
     #[test_only]
     use std::string::utf8;
@@ -25,6 +26,7 @@ module momo_movement::momo {
     const E_RESOURCE_ACCOUNT_NOT_EXIST: u64 = 2;
 
     struct ResourceAccountCreateEvent has drop, store {
+        user_account_hash: string::String,
         resource_address: address
     }
 
@@ -49,10 +51,10 @@ module momo_movement::momo {
         })
     }
 
-    public fun create_resource_account(sender: &signer, user_account_hash: string::String) acquires MomoGlobals {
+    public entry fun create_resource_account(sender: &signer, user_account_hash: string::String) acquires MomoGlobals {
         only_admin(sender);
 
-        let resource_address = calculate_resource_account_address(sender, user_account_hash);
+        let resource_address = calculate_resource_account_address(user_account_hash);
 
         let global = borrow_global_mut<MomoGlobals>(@momo_movement);
         assert!(!table_with_length::contains(&global.resource_account_mapping, resource_address), E_RESOURCE_ACCOUNT_ALREADY_EXIST);
@@ -62,25 +64,32 @@ module momo_movement::momo {
         table_with_length::add(&mut global.resource_account_mapping, resource_address, resource_signer_cap);
 
         event::emit_event<ResourceAccountCreateEvent>(&mut global.resource_account_create_events, ResourceAccountCreateEvent {
+            user_account_hash,
             resource_address,
         });
     }
 
-    public fun try_get_user_resource_account(sender: &signer, user_account_hash: string::String): address acquires MomoGlobals {
-        let resource_address = calculate_resource_account_address(sender, user_account_hash);
+    #[view]
+    public fun try_get_user_resource_account(user_account_hash: string::String): address acquires MomoGlobals {
+        let resource_address = calculate_resource_account_address(user_account_hash);
         let user_signer = &try_get_resource_account_signer(resource_address);
 
         signer::address_of(user_signer)
     }
 
-    public fun mint_token(sender: &signer, receipt: address, amount: u64) acquires MomoGlobals {
+    #[view]
+    public fun momo_balance(resource_account: address): u64 {
+        coin::balance<momo_coin::Coin>(resource_account)
+    }
+
+    public entry fun mint_token(sender: &signer, receipt: address, amount: u64) acquires MomoGlobals {
         only_admin(sender);
 
         let receipt_signer = &try_get_resource_account_signer(receipt);
         momo_coin::mint_internal(receipt_signer, amount);
     }
 
-    public fun batch_mint_token(sender: &signer, receipts: vector<address>, amount: u64) acquires MomoGlobals {
+    public entry fun batch_mint_token(sender: &signer, receipts: vector<address>, amount: u64) acquires MomoGlobals {
         only_admin(sender);
 
         let num_receipt = vector::length(&receipts);
@@ -92,14 +101,14 @@ module momo_movement::momo {
         };
     }
 
-    public fun transfer_token(sender: &signer, from: address, to: address, amount: u64) acquires MomoGlobals {
+    public entry fun transfer_token(sender: &signer, from: address, to: address, amount: u64) acquires MomoGlobals {
         only_admin(sender);
 
         let from_signer = &try_get_resource_account_signer(from);
         momo_coin::transfer(from_signer, to, amount);
     }
 
-    public fun referral_bonus(sender: &signer, inviter: address, amount: u64) acquires MomoGlobals {
+    public entry fun referral_bonus(sender: &signer, inviter: address, amount: u64) acquires MomoGlobals {
         only_admin(sender);
 
         let inviter_signer = &try_get_resource_account_signer(inviter);
@@ -109,9 +118,10 @@ module momo_movement::momo {
         event::emit_event<ReferralBonusEvent>(&mut global.referral_bonus_events, ReferralBonusEvent { inviter, amount });
     }
 
-    fun calculate_resource_account_address(sender: &signer, user_account_hash: string::String): address {
+    fun calculate_resource_account_address(user_account_hash: string::String): address {
+        let owner = get_admin();
         let user_account_bytes = bcs::to_bytes(&user_account_hash);
-        account::create_resource_address(&signer::address_of(sender), user_account_bytes)
+        account::create_resource_address(&owner, user_account_bytes)
     }
 
     fun try_get_resource_account_signer(resource_account: address): signer acquires MomoGlobals {
@@ -134,7 +144,7 @@ module momo_movement::momo {
 
         let user_account_hash = utf8(b"hello world");
         create_resource_account(deployer, user_account_hash);
-        try_get_user_resource_account(deployer, user_account_hash);
+        try_get_user_resource_account(user_account_hash);
     }
 
     #[test(deployer = @momo_movement, attacker = @test_attacker)]
@@ -152,7 +162,7 @@ module momo_movement::momo {
 
         let user_account_hash = utf8(b"hello world");
         create_resource_account(deployer, user_account_hash);
-        let resource_address = try_get_user_resource_account(deployer, user_account_hash);
+        let resource_address = try_get_user_resource_account(user_account_hash);
 
         let coin_balance_before_deposit = coin::balance<momo_coin::Coin>(resource_address);
         assert!(coin_balance_before_deposit == 0, 0);
@@ -189,8 +199,8 @@ module momo_movement::momo {
 
         create_resource_account(deployer, utf8(b"addr1"));
         create_resource_account(deployer, utf8(b"addr2"));
-        let user_account1 = try_get_user_resource_account(deployer, utf8(b"addr1"));
-        let user_account2 = try_get_user_resource_account(deployer, utf8(b"addr2"));
+        let user_account1 = try_get_user_resource_account(utf8(b"addr1"));
+        let user_account2 = try_get_user_resource_account(utf8(b"addr2"));
 
         let receipts = vector::empty<address>();
         vector::push_back(&mut receipts, user_account1);
@@ -220,7 +230,7 @@ module momo_movement::momo {
 
         let user_account_hash = utf8(b"addr1");
         create_resource_account(deployer, user_account_hash);
-        let resource_address1 = try_get_user_resource_account(deployer, user_account_hash);
+        let resource_address1 = try_get_user_resource_account(user_account_hash);
         let receiver = &account::create_account_for_test(@test_attacker);
 
 
@@ -243,7 +253,7 @@ module momo_movement::momo {
 
         let user_account_hash1 = utf8(b"addr1");
         create_resource_account(deployer, user_account_hash1);
-        let inviter = try_get_user_resource_account(deployer, user_account_hash1);
+        let inviter = try_get_user_resource_account(user_account_hash1);
 
         let amount = 100_000_000;
         referral_bonus(deployer, inviter, amount);
