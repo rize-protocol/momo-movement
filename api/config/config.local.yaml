@@ -20,6 +20,10 @@ telegram:
 secret-manager:
   region: us-west-1
 
+aptos:
+  clientUrl: https://aptos.testnet.suzuka.movementlabs.xyz/v1
+  network: testnet
+
 monitoring:
   metricsNamespace: Movement-gaming
   region: us-west-1

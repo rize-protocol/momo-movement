@@ -3,6 +3,7 @@ export interface AppConfig {
   redis: RedisConfig;
   telegram: TelegramConfig;
   'secret-manager': SecretManagerConfig;
+  aptos: MovementAptosConfig;
   monitoring: MonitoringConfig;
 }
 
@@ -36,6 +37,11 @@ export interface SecretManagerConfig {
 export interface RedisConfig {
   host: string;
   port: number;
+}
+
+export interface MovementAptosConfig {
+  clientUrl: string;
+  network: 'mainnet' | 'testnet';
 }
 
 export interface MonitoringConfig {
