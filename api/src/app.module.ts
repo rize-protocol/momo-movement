@@ -5,6 +5,7 @@ import { CommandModule } from '@/command/command.module';
 import { CommonModule } from '@/common/common.module';
 import { CoreContractModule } from '@/core-contract/core-contract.module';
 import { GameModule } from '@/game/game.module';
+import { HealthCheckModule } from '@/health-check/health-check.module';
 import { OverviewModule } from '@/overview/overview.module';
 import { UserModule } from '@/user/user.module';
 import { Web3Module } from '@/web3/web3.module';
@@ -15,6 +16,7 @@ import { AppService } from './app.service';
 @Module({
   imports: [
     CommonModule,
+    HealthCheckModule,
     AuthModule,
     Web3Module,
     CoreContractModule,
