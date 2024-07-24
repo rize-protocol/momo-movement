@@ -17,8 +17,6 @@ module momo_movement::momo {
     #[test_only]
     use std::string::utf8;
     #[test_only]
-    use aptos_framework::coin;
-    #[test_only]
     use momo_movement::role;
 
     // error codes
@@ -30,8 +28,22 @@ module momo_movement::momo {
         resource_address: address
     }
 
+    struct MintEvent has drop, store {
+        receipt: address,
+        uni_id: string::String,
+        amount: u64
+    }
+
+    struct TransferEvent has drop, store {
+        from: address,
+        to: address,
+        uni_id: string::String,
+        amount: u64
+    }
+
     struct ReferralBonusEvent has drop, store {
         inviter: address,
+        uni_id: string::String,
         amount: u64
     }
 
@@ -39,6 +51,8 @@ module momo_movement::momo {
         resource_account_mapping: TableWithLength<address, SignerCapability>,
 
         resource_account_create_events: EventHandle<ResourceAccountCreateEvent>,
+        mint_events: event::EventHandle<MintEvent>,
+        transfer_events: event::EventHandle<TransferEvent>,
         referral_bonus_events: EventHandle<ReferralBonusEvent>,
     }
 
@@ -47,6 +61,8 @@ module momo_movement::momo {
             resource_account_mapping: table_with_length::new(),
 
             resource_account_create_events: account::new_event_handle<ResourceAccountCreateEvent>(sender),
+            mint_events: account::new_event_handle<MintEvent>(sender),
+            transfer_events: account::new_event_handle<TransferEvent>(sender),
             referral_bonus_events: account::new_event_handle<ReferralBonusEvent>(sender),
         })
     }
@@ -88,40 +104,59 @@ module momo_movement::momo {
         coin::balance<momo_coin::Coin>(resource_account)
     }
 
-    public entry fun mint_token(sender: &signer, receipt: address, amount: u64) acquires MomoGlobals {
+    public entry fun mint_token(sender: &signer, receipt: address, uni_id: string::String, amount: u64) acquires MomoGlobals {
         only_admin(sender);
 
         let receipt_signer = &try_get_resource_account_signer(receipt);
         momo_coin::mint_internal(receipt_signer, amount);
+
+        let global = borrow_global_mut<MomoGlobals>(@momo_movement);
+        event::emit_event<MintEvent>(&mut global.mint_events, MintEvent{
+            receipt,
+            uni_id,
+            amount,
+        });
     }
 
-    public entry fun batch_mint_token(sender: &signer, receipts: vector<address>, amount: u64) acquires MomoGlobals {
+    public entry fun batch_mint_token(sender: &signer, receipts: vector<address>, uni_id: string::String, amount: u64) acquires MomoGlobals {
         only_admin(sender);
 
         let num_receipt = vector::length(&receipts);
         let i = 0;
         while (i < num_receipt) {
             let receipt = *vector::borrow(&receipts, i);
-            mint_token(sender, receipt, amount);
+            mint_token(sender, receipt, uni_id, amount);
             i = i + 1;
         };
     }
 
-    public entry fun transfer_token(sender: &signer, from: address, to: address, amount: u64) acquires MomoGlobals {
+    public entry fun transfer_token(sender: &signer, from: address, to: address, uni_id: string::String, amount: u64) acquires MomoGlobals {
         only_admin(sender);
 
         let from_signer = &try_get_resource_account_signer(from);
-        momo_coin::transfer(from_signer, to, amount);
+        momo_coin::transfer_internal(from_signer, to, amount);
+
+        let global = borrow_global_mut<MomoGlobals>(@momo_movement);
+        event::emit_event<TransferEvent>(&mut global.transfer_events, TransferEvent{
+            from,
+            to,
+            uni_id,
+            amount,
+        });
     }
 
-    public entry fun referral_bonus(sender: &signer, inviter: address, amount: u64) acquires MomoGlobals {
+    public entry fun referral_bonus(sender: &signer, inviter: address, uni_id: string::String, amount: u64) acquires MomoGlobals {
         only_admin(sender);
 
         let inviter_signer = &try_get_resource_account_signer(inviter);
         momo_coin::mint_internal(inviter_signer, amount);
 
         let global = borrow_global_mut<MomoGlobals>(@momo_movement);
-        event::emit_event<ReferralBonusEvent>(&mut global.referral_bonus_events, ReferralBonusEvent { inviter, amount });
+        event::emit_event<ReferralBonusEvent>(&mut global.referral_bonus_events, ReferralBonusEvent{
+            inviter,
+            uni_id,
+            amount
+        });
     }
 
     fun calculate_resource_account_address(user_account_hash: string::String): address {
@@ -174,7 +209,7 @@ module momo_movement::momo {
         assert!(coin_balance_before_deposit == 0, 0);
 
         let mint_amount = 100_000_000;
-        mint_token(deployer, resource_address, mint_amount);
+        mint_token(deployer, resource_address, utf8(b""), mint_amount);
 
         let coin_balance_after_deposit = coin::balance<momo_coin::Coin>(resource_address);
         assert!(coin_balance_after_deposit == mint_amount, 1);
@@ -194,7 +229,7 @@ module momo_movement::momo {
         vector::push_back(&mut receipts, user_account1);
         vector::push_back(&mut receipts, user_account2);
 
-        batch_mint_token(deployer, receipts, mint_amount);
+        batch_mint_token(deployer, receipts, utf8(b""), mint_amount);
     }
 
     #[test(deployer=@momo_movement)]
@@ -212,7 +247,7 @@ module momo_movement::momo {
         vector::push_back(&mut receipts, user_account1);
         vector::push_back(&mut receipts, user_account2);
 
-        batch_mint_token(deployer, receipts, mint_amount);
+        batch_mint_token(deployer, receipts, utf8(b""), mint_amount);
 
         let user_balance1 = coin::balance<momo_coin::Coin>(user_account1);
         let user_balance2 = coin::balance<momo_coin::Coin>(user_account2);
@@ -227,7 +262,7 @@ module momo_movement::momo {
         init_for_testing(deployer);
 
         let mint_amount = 100_000_000;
-        mint_token(deployer, signer::address_of(resource_address), mint_amount);
+        mint_token(deployer, signer::address_of(resource_address), utf8(b""), mint_amount);
     }
 
     #[test(deployer=@momo_movement)]
@@ -241,11 +276,11 @@ module momo_movement::momo {
 
 
         let mint_amount = 100_000_000;
-        mint_token(deployer, resource_address1, mint_amount);
+        mint_token(deployer, resource_address1, utf8(b""), mint_amount);
 
         let transfer_amount = 25_000_000;
         coin::register<momo_coin::Coin>(receiver);
-        transfer_token(deployer, resource_address1, @test_attacker, transfer_amount);
+        transfer_token(deployer, resource_address1, @test_attacker, utf8(b""), transfer_amount);
 
         let balance1 = coin::balance<momo_coin::Coin>(resource_address1);
         let balance2 = coin::balance<momo_coin::Coin>(@test_attacker);
@@ -262,7 +297,7 @@ module momo_movement::momo {
         let inviter = try_get_user_resource_account(user_account_hash1);
 
         let amount = 100_000_000;
-        referral_bonus(deployer, inviter, amount);
+        referral_bonus(deployer, inviter, utf8(b""), amount);
 
         let inviterBalance = coin::balance<momo_coin::Coin>(inviter);
         assert!(inviterBalance == amount, 1);

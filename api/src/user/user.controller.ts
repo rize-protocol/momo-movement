@@ -21,7 +21,6 @@ export class UserController {
   @Registration()
   @Post('create')
   async createUser(@CurrentTelegramId() telegramId: number) {
-    console.log(`telegramId: ${telegramId}`);
     await this.entityManager.transaction(async (entityManager) => {
       await this.userService.createUser(telegramId, entityManager);
     });

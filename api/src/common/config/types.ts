@@ -4,6 +4,9 @@ export interface AppConfig {
   telegram: TelegramConfig;
   'secret-manager': SecretManagerConfig;
   aptos: MovementAptosConfig;
+  'core-contract': CoreContractConfig;
+  relayer: RelayerConfig;
+  game: GameConfig;
   monitoring: MonitoringConfig;
 }
 
@@ -42,6 +45,22 @@ export interface RedisConfig {
 export interface MovementAptosConfig {
   clientUrl: string;
   network: 'mainnet' | 'testnet';
+}
+
+export interface CoreContractConfig {
+  contractId: string;
+  decimals: number;
+  adminPrivateKey: SourceValue;
+}
+
+export interface RelayerConfig {
+  commandRedisKey: string;
+}
+
+export interface GameConfig {
+  totalPlay: number;
+  replenishmentInterval: number;
+  coinsPerGame: string;
 }
 
 export interface MonitoringConfig {

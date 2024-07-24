@@ -1,6 +1,7 @@
-import { Aptos } from '@aptos-labs/ts-sdk';
+import { Account, Aptos } from '@aptos-labs/ts-sdk';
 import { INestApplication } from '@nestjs/common';
 import BigNumber from 'bignumber.js';
+import { nanoid } from 'nanoid';
 
 import { CommonModule } from '@/common/common.module';
 import { CoreContractModule } from '@/core-contract/core-contract.module';
@@ -74,8 +75,9 @@ describe('coreContractService test', () => {
 
     const balanceBeforeMint = await coreContractService.momoBalance(resourceAccount!);
 
+    const uniId = nanoid();
     const mintAmount = new BigNumber(100);
-    const tx = await coreContractService.mintToken(resourceAccount!, mintAmount);
+    const tx = await coreContractService.mintToken(resourceAccount!, uniId, mintAmount);
     const simulateRes = await walletService.simulateTransaction(tx);
     expect(simulateRes.success).toBeTruthy();
 
@@ -104,8 +106,9 @@ describe('coreContractService test', () => {
 
     const resourceAccountList = [resourceAccount1!, resourceAccount2!];
 
+    const uniId = nanoid();
     const mintAmount = new BigNumber(100);
-    const tx = await coreContractService.batchMintToken(resourceAccountList, mintAmount);
+    const tx = await coreContractService.batchMintToken(resourceAccountList, uniId, mintAmount);
     const simulateRes = await walletService.simulateTransaction(tx);
     expect(simulateRes.success).toBeTruthy();
 
@@ -127,10 +130,11 @@ describe('coreContractService test', () => {
     const balanceBeforeTransfer = await coreContractService.momoBalance(resourceAccount!);
     console.log(`resourceAccount: ${resourceAccount}, balanceBeforeTransfer: ${balanceBeforeTransfer}`);
 
-    const receiptAddress = '0xd2cf7dd5d8ac235e59c94e26262c78976024892032dc6a74e9073e6e433cff23';
+    const receiptAddress = Account.generate().accountAddress.toString();
     const transferAmount = new BigNumber(50);
 
-    const tx = await coreContractService.transferToken(resourceAccount!, receiptAddress, transferAmount);
+    const uniId = nanoid();
+    const tx = await coreContractService.transferToken(resourceAccount!, receiptAddress, uniId, transferAmount);
     const simulateRes = await walletService.simulateTransaction(tx);
     expect(simulateRes.success).toBeTruthy();
 
@@ -153,8 +157,9 @@ describe('coreContractService test', () => {
     const balanceBeforeBonus = await coreContractService.momoBalance(resourceAccount!);
     console.log(`resourceAccount: ${resourceAccount}, balanceBeforeBonus: ${balanceBeforeBonus}`);
 
+    const uniId = nanoid();
     const referralAmount = new BigNumber(50);
-    const tx = await coreContractService.referralBonus(resourceAccount!, referralAmount);
+    const tx = await coreContractService.referralBonus(resourceAccount!, uniId, referralAmount);
     const simulateRes = await walletService.simulateTransaction(tx);
     expect(simulateRes.success).toBeTruthy();
 

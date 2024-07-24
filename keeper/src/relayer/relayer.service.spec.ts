@@ -1,5 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { nanoid } from 'nanoid';
 
 import { CommonModule } from '@/common/common.module';
 import { RelayerConfig } from '@/common/config/types';
@@ -109,8 +110,8 @@ describe('relayerService test', () => {
 
     const mintAmount1 = '100';
     const mintAmount2 = '50';
-    const command3: Command = { type: 'mint_token', receipt: resourceAccount1!, amount: mintAmount1 };
-    const command4: Command = { type: 'mint_token', receipt: resourceAccount2!, amount: mintAmount2 };
+    const command3: Command = { type: 'mint_token', receipt: resourceAccount1!, uniId: nanoid(), amount: mintAmount1 };
+    const command4: Command = { type: 'mint_token', receipt: resourceAccount2!, uniId: nanoid(), amount: mintAmount2 };
     redisService.rpush(commandRedisKey, JSON.stringify(command3), JSON.stringify(command4));
 
     await timeService.sleep(20000); // sleep 10s

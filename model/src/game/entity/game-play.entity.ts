@@ -1,18 +1,24 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
-@Entity({ name: 'user' })
-export class User {
+@Entity({ name: 'game_play' })
+export class GamePlay {
   @PrimaryGeneratedColumn()
   id?: number;
 
   @Column({ unique: true })
+  userId: number;
+
+  @Column()
   telegramId: number;
 
   @Column()
-  accountHash: string;
+  totalPlays: number;
 
   @Column()
-  resourceAddress: string;
+  remainingPlays: number;
+
+  @Column()
+  lastReplenishmentTime: Date;
 
   @UpdateDateColumn()
   updatedAt?: Date;

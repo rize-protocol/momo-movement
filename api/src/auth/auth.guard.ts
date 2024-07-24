@@ -45,7 +45,7 @@ export class AuthGuard implements CanActivate {
     this.verifyTelegramInitData(request);
 
     const telegramId = request.telegramId as number;
-    const user = await this.userService.getUserByTelegramId(telegramId, this.entityManager);
+    const user = await this.userService.upsertUserByTelegramId(telegramId, this.entityManager);
     if (!user) {
       throw new NotFoundException();
     }

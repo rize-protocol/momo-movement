@@ -22,11 +22,11 @@ aptos:
   network: testnet
 
 core-contract:
-  contractId: '0x9815296865239bb63f4952c6add4b75a0924c3af52c2bbfca9cdc403b7bdbc97'
+  contractId: '0xe6578fbaccd4c937b27cb836a76a78c493d34310bdb214d95e8753ee06719f60'
   decimals: 6
   adminPrivateKey:
     source: use-value
-    value: '0x0042175eb3b903621e3549046fb0641a8206d619fd065fb8a0abaf9f33437bcd'
+    value: '0xc17ac4d7eea0e03774415f446c1cd8a93bdc6a63523dfa37a33c14c7d68dc5b1'
 
 relayer:
   commandRedisKey: 'momo-command-list'

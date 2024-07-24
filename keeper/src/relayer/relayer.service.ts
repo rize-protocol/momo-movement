@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import BigNumber from 'bignumber.js';
@@ -10,7 +10,7 @@ import { Command } from '@/relayer/types';
 import { WalletService } from '@/wallet/wallet.service';
 
 @Injectable()
-export class RelayerService implements OnModuleInit {
+export class RelayerService {
   private isRunning = false;
 
   private readonly commandRedisKey: string;
@@ -30,16 +30,11 @@ export class RelayerService implements OnModuleInit {
     this.commandRedisKey = relayerConfig.commandRedisKey;
   }
 
-  async onModuleInit() {
-    console.log('relyuaer', this.commandRedisKey);
-  }
-
   @Cron(CronExpression.EVERY_SECOND)
   async cronCommand() {
     if (this.isRunning) {
       return;
     }
-    this.logger.log('[handleCommand] start');
     this.isRunning = true;
 
     try {
@@ -55,8 +50,6 @@ export class RelayerService implements OnModuleInit {
     } finally {
       this.isRunning = false;
     }
-
-    this.logger.log('[handleCommand] end');
   }
 
   private async handleCommand(commandStr: string) {
@@ -68,13 +61,26 @@ export class RelayerService implements OnModuleInit {
         await this.handleCreateResourceAccount(command.userAccountHash);
         break;
       case 'mint_token':
-        await this.handleMintToken(command.receipt, new BigNumber(command.amount));
+        await this.handleMintToken({
+          receipt: command.receipt,
+          uniId: command.uniId,
+          amount: new BigNumber(command.amount),
+        });
         break;
       case 'transfer_token':
-        await this.handleTransferToken(command.from, command.to, new BigNumber(command.amount));
+        await this.handleTransferToken({
+          from: command.from,
+          to: command.to,
+          uniId: command.uniId,
+          amount: new BigNumber(command.amount),
+        });
         break;
       case 'referral_bonus':
-        await this.handleReferralToken(command.inviter, new BigNumber(command.amount));
+        await this.handleReferralToken({
+          inviter: command.inviter,
+          uniId: command.uniId,
+          amount: new BigNumber(command.amount),
+        });
         break;
       default:
         throw new Error(`Unknown command type: ${(command as Command).type}`);
@@ -101,14 +107,16 @@ export class RelayerService implements OnModuleInit {
     this.logger.log(`[handleCreateResourceAccount] create resource account hash: ${committedTxn.hash} done`);
   }
 
-  private async handleMintToken(receipt: string, amount: BigNumber) {
+  private async handleMintToken(input: { receipt: string; uniId: string; amount: BigNumber }) {
+    const { receipt, uniId, amount } = input;
+
     const exists = await this.coreContractService.resourceAccountExists(receipt);
     if (!exists) {
       this.logger.log(`[handleMintToken] receipt resource account: ${receipt} not exist, return`);
       return;
     }
 
-    const tx = await this.coreContractService.mintToken(receipt, amount);
+    const tx = await this.coreContractService.mintToken(receipt, uniId, amount);
     const simulateRes = await this.walletService.simulateTransaction(tx);
     if (!simulateRes.success) {
       throw new Error(`[handleMintToken] simulate error: ${JSON.stringify(simulateRes)}`);
@@ -116,17 +124,19 @@ export class RelayerService implements OnModuleInit {
 
     const committedTxn = await this.walletService.signAndSubmitTransaction(tx);
     await this.walletService.waitForTransaction(committedTxn.hash);
-    console.log(`[handleMintToken] mint token hash: ${committedTxn.hash} done`);
+    this.logger.log(`[handleMintToken] mint token hash: ${committedTxn.hash} done`);
   }
 
-  private async handleTransferToken(from: string, to: string, amount: BigNumber) {
+  private async handleTransferToken(input: { from: string; to: string; uniId: string; amount: BigNumber }) {
+    const { from, to, uniId, amount } = input;
+
     const exists = await this.coreContractService.resourceAccountExists(from);
     if (!exists) {
       this.logger.log(`[handleTransferToken] from resource account: ${from} not exist, return`);
       return;
     }
 
-    const tx = await this.coreContractService.transferToken(from, to, amount);
+    const tx = await this.coreContractService.transferToken(from, to, uniId, amount);
     const simulateRes = await this.walletService.simulateTransaction(tx);
     if (!simulateRes.success) {
       throw new Error(`[handleTransferToken] simulate error: ${JSON.stringify(simulateRes)}`);
@@ -137,14 +147,16 @@ export class RelayerService implements OnModuleInit {
     console.log(`[handleTransferToken] transfer token hash: ${committedTxn.hash} done`);
   }
 
-  private async handleReferralToken(inviter: string, amount: BigNumber) {
+  private async handleReferralToken(input: { inviter: string; uniId: string; amount: BigNumber }) {
+    const { inviter, uniId, amount } = input;
+
     const exists = await this.coreContractService.resourceAccountExists(inviter);
     if (!exists) {
       this.logger.log(`[handleReferralToken] inviter resource account: ${inviter} not exist, return`);
       return;
     }
 
-    const tx = await this.coreContractService.referralBonus(inviter, amount);
+    const tx = await this.coreContractService.referralBonus(inviter, uniId, amount);
     const simulateRes = await this.walletService.simulateTransaction(tx);
     if (!simulateRes.success) {
       throw new Error(`[handleReferralToken] simulate error: ${JSON.stringify(simulateRes)}`);

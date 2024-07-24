@@ -71,46 +71,46 @@ export class CoreContractService {
     });
   }
 
-  async mintToken(receipt: string, amount: BigNumber) {
+  async mintToken(receipt: string, uniId: string, amount: BigNumber) {
     const amountInWei = amount.times(10 ** this.decimals).toFixed();
     return this.aptos.transaction.build.simple({
       sender: this.walletService.admin.accountAddress,
       data: {
         function: `${this.contractId}::momo::mint_token`,
-        functionArguments: [receipt, amountInWei],
+        functionArguments: [receipt, uniId, amountInWei],
       },
     });
   }
 
-  async batchMintToken(receipts: string[], amount: BigNumber) {
+  async batchMintToken(receipts: string[], uniId: string, amount: BigNumber) {
     const amountInWei = amount.times(10 ** this.decimals).toFixed();
     return this.aptos.transaction.build.simple({
       sender: this.walletService.admin.accountAddress,
       data: {
         function: `${this.contractId}::momo::batch_mint_token`,
-        functionArguments: [receipts, amountInWei],
+        functionArguments: [receipts, uniId, amountInWei],
       },
     });
   }
 
-  async transferToken(from: string, to: string, amount: BigNumber) {
+  async transferToken(from: string, to: string, uniId: string, amount: BigNumber) {
     const amountInWei = amount.times(10 ** this.decimals).toFixed();
     return this.aptos.transaction.build.simple({
       sender: this.walletService.admin.accountAddress,
       data: {
         function: `${this.contractId}::momo::transfer_token`,
-        functionArguments: [from, to, amountInWei],
+        functionArguments: [from, to, uniId, amountInWei],
       },
     });
   }
 
-  async referralBonus(inviter: string, amount: BigNumber) {
+  async referralBonus(inviter: string, uniId: string, amount: BigNumber) {
     const amountInWei = amount.times(10 ** this.decimals).toFixed();
     return this.aptos.transaction.build.simple({
       sender: this.walletService.admin.accountAddress,
       data: {
         function: `${this.contractId}::momo::referral_bonus`,
-        functionArguments: [inviter, amountInWei],
+        functionArguments: [inviter, uniId, amountInWei],
       },
     });
   }

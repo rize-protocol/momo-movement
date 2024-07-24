@@ -24,6 +24,21 @@ aptos:
   clientUrl: https://aptos.testnet.suzuka.movementlabs.xyz/v1
   network: testnet
 
+core-contract:
+  contractId: '0xe6578fbaccd4c937b27cb836a76a78c493d34310bdb214d95e8753ee06719f60'
+  decimals: 6
+  adminPrivateKey:
+    source: use-value
+    value: '0xc17ac4d7eea0e03774415f446c1cd8a93bdc6a63523dfa37a33c14c7d68dc5b1'
+
+relayer:
+  commandRedisKey: 'momo-command-list'
+
+game:
+  totalPlay: 20
+  replenishmentInterval: 10 # 10 secs
+  coinsPerGame: '10'
+
 monitoring:
   metricsNamespace: Movement-gaming
   region: us-west-1
