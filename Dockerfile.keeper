@@ -8,9 +8,9 @@ WORKDIR /usr/src/app
 COPY . .
 
 # Install dependencies
-RUN corepack enable && yarn install
-RUN cd model && yarn install
-RUN cd keeper && yarn install && yarn update && yarn build
+RUN corepack enable && yarn install --production
+RUN cd model && yarn install --production
+RUN cd keeper && yarn install --production && yarn update && yarn build
 
 # Start service
 CMD [ "yarn", "start:keeper" ]

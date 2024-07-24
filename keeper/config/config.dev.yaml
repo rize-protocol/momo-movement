@@ -12,7 +12,7 @@ database:
 
 redis:
   host: rize-referral-dev.4mbrxl.clustercfg.usw1.cache.amazonaws.com
-  port: 63799
+  port: 6379
 
 secret-manager:
   region: us-west-1
