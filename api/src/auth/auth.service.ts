@@ -19,7 +19,7 @@ export class AuthService {
   }
 
   verifyTelegramInitData(request: Request) {
-    const initData = request.headers.authorization as string;
+    const initData = request.headers.tginitdata as string;
     const decodedInitData = decodeURIComponent(initData);
 
     const secretKey = this.generateSecretKey();
@@ -31,7 +31,7 @@ export class AuthService {
   }
 
   getTelegramUid(request: Request) {
-    const initData = request.headers.authorization as string;
+    const initData = request.headers.tginitdata as string;
     const decodedInitData = decodeURIComponent(initData);
 
     const urlParams = new URLSearchParams(decodedInitData);
