@@ -11,7 +11,7 @@ COPY . .
 RUN corepack enable && yarn install
 RUN cd model && yarn install
 RUN cd database && yarn install
-RUN cd api && yarn install && yarn run build # build dist
+RUN cd api && yarn install && yarn update && yarn run build # build dist
 
 # Start service
 CMD [ "yarn", "start" ]
