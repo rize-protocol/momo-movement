@@ -1,0 +1,17 @@
+# Base image
+FROM node:18
+
+# Create app directory
+WORKDIR /usr/src/app
+
+# Bundle app source
+COPY . .
+
+# Install dependencies
+RUN corepack enable && yarn install
+RUN cd model && yarn install
+RUN cd database && yarn install
+RUN cd api && yarn install && yarn run build # build dist
+
+# Start service
+CMD [ "yarn", "start" ]

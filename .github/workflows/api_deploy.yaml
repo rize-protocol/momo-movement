@@ -1,0 +1,111 @@
+name: api_deploy
+on:
+  push:
+    branches:
+      - 'main'
+      - 'stage'
+      - 'preview'
+      - 'release'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [ 18 ]
+
+    steps:
+      - name: Copy repository
+        uses: actions/checkout@v3
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Set Env based on branch
+        run: |
+          cd api/config
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            ln -sfn config.dev.yaml config.yaml
+            echo "TARGET_HOST=${{ vars.TARGET_HOST_DEV }}" >> $GITHUB_ENV
+          elif [ "${{ github.ref }}" = "refs/heads/stage" ]; then
+            ln -sfn config.stage.yaml config.yaml
+            echo "TARGET_HOST=${{ vars.TARGET_HOST_STAGE }}" >> $GITHUB_ENV
+          elif [ "${{ github.ref }}" = "refs/heads/preview" ]; then
+            ln -sfn config.preview.yaml config.yaml
+            echo "TARGET_HOST=${{ vars.TARGET_HOST_PREVIEW }}" >> $GITHUB_ENV
+          elif [ "${{ github.ref }}" = "refs/heads/release" ]; then
+            ln -sfn config.release.yaml config.yaml
+            echo "TARGET_HOST=${{ vars.TARGET_HOST_RELEASE }}" >> $GITHUB_ENV
+          else
+            echo "Unsupported branch for this action. Exiting..."
+            exit 1
+          fi
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, tag, and push image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: momo-movement-api
+          IMAGE_TAG: 1.0.${{ github.run_number }}
+        run: |
+          docker build -f Dockerfile.api -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Database Migration
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ vars.JUMP_HOST }}
+          username: ${{ vars.JUMP_USERNAME }}
+          key: ${{ secrets.JUMP_CREDENTIAL }}
+          port: 22
+          command_timeout: 30m
+          script: |
+            ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}
+            ECR_REPOSITORY=momo-movement-api
+            IMAGE_TAG=1.0.${{ github.run_number }}
+            FIRST_IP=$(echo "${{ env.TARGET_HOST }}" | cut -d' ' -f1)
+            ssh ${{ vars.TARGET_USERNAME }}@$FIRST_IP << EOF
+              aws ecr get-login-password --region us-west-1 | docker login --username AWS --password-stdin $ECR_REGISTRY
+              docker pull $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+              docker run --rm --name db-migration $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG yarn init:db
+            EOF
+
+      - name: SSH and Deploy via Jump Host
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ vars.JUMP_HOST }}
+          username: ${{ vars.JUMP_USERNAME }}
+          key: ${{ secrets.JUMP_CREDENTIAL }}
+          port: 22
+          command_timeout: 30m
+          script: |
+            ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}
+            ECR_REPOSITORY=momo-movement-api
+            IMAGE_TAG=1.0.${{ github.run_number }}
+            echo "start deploy to hosts: ${{ env.TARGET_HOST }}"
+            for HOST in ${{ env.TARGET_HOST }}
+            do
+              ssh ${{ vars.TARGET_USERNAME }}@$HOST << EOF
+                aws ecr get-login-password --region us-west-1 | docker login --username AWS --password-stdin $ECR_REGISTRY
+                echo "final: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+                docker pull $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+                docker stop $ECR_REPOSITORY | true
+                docker rm $ECR_REPOSITORY | true
+                docker run -dit --name $ECR_REPOSITORY --log-opt max-size=50m --log-opt max-file=2 -p 80:3000 $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+                docker system prune -fa
+                docker image prune -af
+            EOF
+              echo "deploy success host: $HOST"
+            done
