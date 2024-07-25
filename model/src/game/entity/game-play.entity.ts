@@ -18,6 +18,9 @@ export class GamePlay {
   remainingPlays: number;
 
   @Column()
+  extraPlays: number;
+
+  @Column()
   lastReplenishmentTime: Date;
 
   @UpdateDateColumn()

@@ -59,8 +59,8 @@ describe('userService test', () => {
 
   it('create user', async () => {
     const telegramId = testService.generateTelegramId();
-    await userService.createUser(telegramId, testService.entityManager);
-    await expect(userService.createUser(telegramId, testService.entityManager)).rejects.toThrow('user exist!');
+    await userService.createUser(telegramId, '', testService.entityManager);
+    await expect(userService.createUser(telegramId, '', testService.entityManager)).rejects.toThrow('user exist!');
     await expect(userService.mustGetUserByTelegramId(telegramId, testService.entityManager)).rejects.toThrow(
       'user resource address not exist',
     );

@@ -1,21 +1,21 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
-@Entity({ name: 'game_play_history' })
-export class GamePlayHistory {
+@Entity({ name: 'invitation' })
+export class Invitation {
   @PrimaryGeneratedColumn()
   id?: number;
 
-  @Column()
+  @Column({ unique: true })
   userId: number;
 
   @Column()
-  telegramId: number;
-
-  @Column({ unique: true })
-  uniId: string;
+  inviteCount: number;
 
   @Column()
-  coinAmount: string;
+  checkedLevel: number;
+
+  @Column()
+  unCheckedLevel: number;
 
   @UpdateDateColumn()
   updatedAt?: Date;

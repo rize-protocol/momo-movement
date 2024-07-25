@@ -1,11 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
-import { User } from 'movement-gaming-model';
 import { EntityManager } from 'typeorm';
+
+import { UserService } from '@/user/user.service';
 
 @Injectable()
 export class TestService {
-  constructor(@InjectEntityManager() public readonly entityManager: EntityManager) {}
+  constructor(
+    @InjectEntityManager() public readonly entityManager: EntityManager,
+    private readonly userService: UserService,
+  ) {}
 
   async clear() {
     const entities = this.entityManager.connection.entityMetadatas;
@@ -17,23 +21,28 @@ export class TestService {
     }
   }
 
-  async tryCreateUser(telegramId: number) {
-    const exists = await this.entityManager.findOneBy(User, { telegramId });
-    if (exists) {
-      return exists;
+  async tryCreateUser(telegramId: number, referralCode: string) {
+    let user = await this.userService.tryGetUserByTelegramId(telegramId, this.entityManager);
+    if (!user) {
+      await this.userService.createUser(telegramId, referralCode, this.entityManager);
+      user = await this.userService.tryGetUserByTelegramId(telegramId, this.entityManager);
     }
 
-    const user: User = {
-      telegramId,
-      accountHash: 'hash',
-      resourceAddress: `resource-${telegramId}`,
-    };
-    await this.entityManager.insert(User, user);
+    if (!user) {
+      throw new Error('create user failed');
+    }
+
+    if (!user.resourceAddress) {
+      user.resourceAddress = `testResourceAddress_${telegramId}`;
+      await this.entityManager.save(user);
+    }
+
     return user;
   }
 
-  generateTelegramId() {
-    return Math.floor(new Date().getTime() / 1000);
+  generateTelegramId(incr: number = 0) {
+    const telegramId = Math.floor(new Date().getTime() / 1000);
+    return telegramId + incr;
   }
 
   private randomFromInterval(min: number, max: number) {

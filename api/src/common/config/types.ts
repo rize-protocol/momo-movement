@@ -7,6 +7,7 @@ export interface AppConfig {
   'core-contract': CoreContractConfig;
   relayer: RelayerConfig;
   game: GameConfig;
+  invitation: InvitationConfig;
   monitoring: MonitoringConfig;
 }
 
@@ -61,6 +62,22 @@ export interface GameConfig {
   totalPlay: number;
   replenishmentInterval: number;
   coinsPerGame: string;
+}
+
+export interface InvitationConfig {
+  codeLen: number;
+  maxGenerateCodeTryTimes: number;
+  target: Record<number, InvitationTargetConfig>;
+  targetMemberNumsStep: number;
+  targetRewardCoinsStep: number;
+  targetRewardPlaysStep: number;
+}
+
+export interface InvitationTargetConfig {
+  level: number;
+  memberNums: number;
+  rewardCoins: number;
+  rewardPlays: number;
 }
 
 export interface MonitoringConfig {

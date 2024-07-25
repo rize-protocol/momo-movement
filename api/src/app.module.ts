@@ -6,6 +6,8 @@ import { CommonModule } from '@/common/common.module';
 import { CoreContractModule } from '@/core-contract/core-contract.module';
 import { GameModule } from '@/game/game.module';
 import { HealthCheckModule } from '@/health-check/health-check.module';
+import { InvitationModule } from '@/invitation/invitation.module';
+import { MomoModule } from '@/momo/momo.module';
 import { OverviewModule } from '@/overview/overview.module';
 import { UserModule } from '@/user/user.module';
 import { Web3Module } from '@/web3/web3.module';
@@ -24,6 +26,8 @@ import { AppService } from './app.service';
     CommandModule,
     GameModule,
     OverviewModule,
+    InvitationModule,
+    MomoModule,
   ],
   controllers: [AppController],
   providers: [AppService],

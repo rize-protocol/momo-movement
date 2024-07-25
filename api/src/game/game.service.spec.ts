@@ -61,7 +61,7 @@ describe('GameService Test', () => {
 
   it('init game play', async () => {
     const telegramId = testService.generateTelegramId();
-    const user = await testService.tryCreateUser(telegramId);
+    const user = await testService.tryCreateUser(telegramId, '');
 
     const gamePlay = await gameService.getPlayInfo(user, testService.entityManager);
     expect(gamePlay.total).toEqual(gamePlayConfig.totalPlay);
@@ -70,7 +70,7 @@ describe('GameService Test', () => {
 
   it('play game', async () => {
     const telegramId = testService.generateTelegramId();
-    const user = await testService.tryCreateUser(telegramId);
+    const user = await testService.tryCreateUser(telegramId, '');
 
     const initCurrentTime = 1721802100 * 1000;
     jest.spyOn(timeService, 'getCurrentSecondPrecisionTime').mockImplementation(() => new Date(initCurrentTime));

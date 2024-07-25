@@ -4,20 +4,21 @@ import { EntityManager } from 'typeorm';
 
 import { CoreContractService } from '@/core-contract/core-contract.service';
 import { GameService } from '@/game/game.service';
+import { InvitationService } from '@/invitation/invitation.service';
 import { OverviewInfoResponse } from '@/overview/dto/overview-info.response';
 
 @Injectable()
 export class OverviewService {
   constructor(
     private readonly gameService: GameService,
+    private readonly invitationService: InvitationService,
     private readonly coreContractService: CoreContractService,
   ) {}
 
   async info(user: User, entityManager: EntityManager): Promise<OverviewInfoResponse> {
-    const [gameInfo, coinBalance] = await Promise.all([
-      this.gameService.getPlayInfo(user, entityManager),
-      this.coreContractService.momoBalance(user.resourceAddress),
-    ]);
+    const gameInfo = await this.gameService.getPlayInfo(user, entityManager);
+    const invitationInfo = await this.invitationService.getUserInvitationInfo(user, entityManager);
+    const coinBalance = await this.coreContractService.momoBalance(user.resourceAddress);
 
     return {
       user: {
@@ -25,11 +26,8 @@ export class OverviewService {
         accountHash: user.accountHash,
         resourceAddress: user.resourceAddress,
       },
-      game: {
-        total: gameInfo.total,
-        remaining: gameInfo.remaining,
-        replenishmentIn: gameInfo.replenishmentIn,
-      },
+      game: gameInfo,
+      invitation: invitationInfo,
       coins: coinBalance.toFixed(),
     };
   }

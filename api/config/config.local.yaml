@@ -39,6 +39,34 @@ game:
   replenishmentInterval: 10 # 10 secs
   coinsPerGame: '10'
 
+invitation:
+  codeLen: 6
+  maxGenerateCodeTryTimes: 8
+  target:
+    0:
+      level: 0
+      memberNums: 3
+      rewardCoins: 0
+      rewardPlays: 0
+    1:
+      level: 1
+      memberNums: 9
+      rewardCoins: 10
+      rewardPlays: 1
+    2:
+      level: 2
+      memberNums: 18
+      rewardCoins: 20
+      rewardPlays: 2
+    3:
+      level: 3
+      memberNums: 27
+      rewardCoins: 30
+      rewardPlays: 3
+  targetMemberNumsStep: 9
+  targetRewardCoinsStep: 10
+  targetRewardPlaysStep: 1
+
 monitoring:
   metricsNamespace: Movement-gaming
   region: us-west-1

@@ -1,16 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { GamePlay, User } from 'movement-gaming-model';
+import { GamePlay, GamePlayHistory, User } from 'movement-gaming-model';
 import { nanoid } from 'nanoid';
 import { EntityManager } from 'typeorm';
 
-import { CommandService } from '@/command/command.service';
 import { GameConfig } from '@/common/config/types';
 import { RedisService } from '@/common/services/redis.service';
 import { TimeService } from '@/common/services/time.service';
 import { checkBadRequest } from '@/common/utils/check';
 import { GamePlayInfo } from '@/game/types';
-import { UserService } from '@/user/user.service';
+import { MomoService } from '@/momo/momo.service';
 
 @Injectable()
 export class GameService {
@@ -18,16 +17,15 @@ export class GameService {
 
   private readonly replenishmentInterval: number;
 
-  private readonly coinsPerGame: string;
-
   private readonly redisLockTime = 10000; // 10s
+
+  private readonly coinsPerGame: string;
 
   constructor(
     private readonly configService: ConfigService,
-    private readonly userService: UserService,
-    private readonly commandService: CommandService,
     private readonly redisService: RedisService,
     private readonly timeService: TimeService,
+    private readonly momoService: MomoService,
   ) {
     const gameConfig = this.configService.get<GameConfig>('game');
     if (!gameConfig) {
@@ -48,8 +46,8 @@ export class GameService {
     const replenishmentIn = totalReplenishmentTime === 0 ? totalReplenishmentTime : totalReplenishmentTime - timeGap;
 
     return {
-      total: gamePlay.totalPlays,
-      remaining: gamePlay.remainingPlays,
+      total: gamePlay.totalPlays + gamePlay.extraPlays,
+      remaining: gamePlay.remainingPlays + gamePlay.extraPlays,
       replenishmentIn,
       lastReplenishmentTime: gamePlay.lastReplenishmentTime,
     };
@@ -59,16 +57,39 @@ export class GameService {
     const redisLock = await this.redisService.acquireLock(`momo-play-${user.id!}`, this.redisLockTime);
     try {
       const gamePlay = await this.refreshGamePlay(user, entityManager);
-      checkBadRequest(gamePlay.remainingPlays > 0, 'user remaining play is 0');
+      checkBadRequest(gamePlay.remainingPlays > 0 || gamePlay.extraPlays > 0, 'user remaining play is 0');
 
       const uniId = nanoid();
-      await this.commandService.addMintToken(user.resourceAddress, uniId, this.coinsPerGame);
 
-      if (gamePlay.remainingPlays === this.totalPlay) {
-        gamePlay.lastReplenishmentTime = this.timeService.getCurrentSecondPrecisionTime();
+      // save GamePlay
+      if (gamePlay.extraPlays > 0) {
+        gamePlay.extraPlays--;
+      } else {
+        if (gamePlay.remainingPlays === this.totalPlay) {
+          gamePlay.lastReplenishmentTime = this.timeService.getCurrentSecondPrecisionTime();
+        }
+        gamePlay.remainingPlays--;
       }
-      gamePlay.remainingPlays -= 1;
       await entityManager.save(GamePlay, gamePlay);
+
+      // save GameHistory
+      const history: GamePlayHistory = {
+        userId: user.id!,
+        telegramId: user.telegramId,
+        uniId,
+        coinAmount: this.coinsPerGame,
+      };
+      const res = await entityManager.insert(GamePlayHistory, history);
+      const historyId = res.identifiers[0].id as number;
+
+      // mint momo
+      await this.momoService.mintMomo(entityManager, {
+        user,
+        uniId,
+        momoChange: this.coinsPerGame,
+        module: 'Game',
+        message: JSON.stringify({ historyId }),
+      });
 
       return uniId;
     } finally {
@@ -76,11 +97,26 @@ export class GameService {
     }
   }
 
+  async addExtraPlay(user: User, extraCount: number, entityManager: EntityManager) {
+    const gamePlay = await this.mustGetGamePlay(user.id!, entityManager);
+    gamePlay.extraPlays += extraCount;
+    await entityManager.save(gamePlay);
+  }
+
+  async initPlay(user: User, entityManager: EntityManager) {
+    const gamePlay: GamePlay = {
+      userId: user.id!,
+      telegramId: user.telegramId,
+      totalPlays: this.totalPlay,
+      remainingPlays: this.totalPlay,
+      extraPlays: 0,
+      lastReplenishmentTime: this.timeService.getCurrentSecondPrecisionTime(),
+    };
+    await entityManager.insert(GamePlay, gamePlay);
+  }
+
   private async refreshGamePlay(user: User, entityManager: EntityManager) {
-    const gamePlay = await entityManager.findOneBy(GamePlay, { id: user.id! });
-    if (!gamePlay) {
-      return this.initPlayInfo(user, entityManager);
-    }
+    const gamePlay = await this.mustGetGamePlay(user.id!, entityManager);
 
     // if totalPlays === remainingPlays, return directly.
     if (gamePlay.totalPlays === gamePlay.remainingPlays) {
@@ -108,17 +144,5 @@ export class GameService {
     const existGamePlay = await entityManager.findOneBy(GamePlay, { userId });
     checkBadRequest(!!existGamePlay, 'user game play not found');
     return existGamePlay!;
-  }
-
-  private async initPlayInfo(user: User, entityManager: EntityManager) {
-    const gamePlay: GamePlay = {
-      userId: user.id!,
-      telegramId: user.telegramId,
-      totalPlays: this.totalPlay,
-      remainingPlays: this.totalPlay,
-      lastReplenishmentTime: this.timeService.getCurrentSecondPrecisionTime(),
-    };
-    await entityManager.insert(GamePlay, gamePlay);
-    return gamePlay;
   }
 }

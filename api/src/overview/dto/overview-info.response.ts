@@ -1,7 +1,12 @@
+import { GamePlayInfo } from '@/game/types';
+import { UserInvitationInfo } from '@/invitation/types';
+
 export class OverviewInfoResponse {
   user: UserInfo;
 
-  game: GameInfo;
+  game: GamePlayInfo;
+
+  invitation: UserInvitationInfo;
 
   coins: string;
 }
@@ -12,12 +17,4 @@ export class UserInfo {
   accountHash: string;
 
   resourceAddress: string;
-}
-
-export class GameInfo {
-  total: number;
-
-  remaining: number;
-
-  replenishmentIn: number;
 }
