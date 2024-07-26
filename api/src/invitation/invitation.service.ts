@@ -94,7 +94,7 @@ export class InvitationService {
       invitationInfo.checkedLevel = invitationInfo.unCheckedLevel;
       await entityManager.save(invitationInfo);
 
-      return uniId;
+      return { uniId, rewardCoins, rewardPlays };
     } finally {
       await redisLock.release();
     }

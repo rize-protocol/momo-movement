@@ -8,6 +8,7 @@ export interface AppConfig {
   relayer: RelayerConfig;
   game: GameConfig;
   invitation: InvitationConfig;
+  task: TaskConfig;
   monitoring: MonitoringConfig;
 }
 
@@ -76,6 +77,18 @@ export interface InvitationConfig {
 export interface InvitationTargetConfig {
   level: number;
   memberNums: number;
+  rewardCoins: number;
+  rewardPlays: number;
+}
+
+export interface TaskConfig {
+  list: TaskItemConfig[];
+}
+
+export interface TaskItemConfig {
+  taskId: number;
+  taskName: string;
+  taskLink: string;
   rewardCoins: number;
   rewardPlays: number;
 }

@@ -146,7 +146,7 @@ describe('InvitationService test', () => {
     expect(initUserOverview.invitation.uncheckedLevel).toBe(2);
 
     // init user claimRewards
-    const uniId = await invitationService.claimRewards(initUser, testService.entityManager);
+    const { uniId } = await invitationService.claimRewards(initUser, testService.entityManager);
     expect(uniId.length).toBeGreaterThan(0);
 
     initUserOverview = await overviewService.info(initUser, testService.entityManager);
