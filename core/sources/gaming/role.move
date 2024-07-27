@@ -1,5 +1,7 @@
 module momo_movement::role {
     use std::signer;
+    use aptos_std::table_with_length;
+    use aptos_std::table_with_length::TableWithLength;
     use aptos_framework::event::{Self, EventHandle};
     use aptos_framework::account;
 
@@ -7,25 +9,37 @@ module momo_movement::role {
     const E_NOT_ADMIN: u64 = 1;
     const E_NOT_COLLECTOR: u64 = 2;
     const E_NOT_PENDING_ADMIN: u64 = 3;
+    const E_NOT_OPERATOR: u64 = 4;
+    const E_ALREADY_OPERATOR: u64 = 5;
 
     const ZERO_ADDRESS: address = @0x0;
 
     struct Role has key {
-        // REVIEW: Consider one admin and multiple operator considering parallelism
-        //   in backend. Admin can add / remove operator.
         admin: address,
         pending_admin: address,
+        operator_list: TableWithLength<address, bool>,
+
         transfer_admin_events: EventHandle<address>,
         accept_admin_events: EventHandle<address>,
+        add_operator_events: EventHandle<address>,
+        remove_operator_events: EventHandle<address>,
     }
 
     fun init_module(sender: &signer) {
         let sender_addr = signer::address_of(sender);
+
+        let operator_list = table_with_length::new<address, bool>();
+        table_with_length::add(&mut operator_list, sender_addr, true);
+
         move_to(sender, Role {
             admin: sender_addr,
             pending_admin: ZERO_ADDRESS,
+            operator_list,
+
             transfer_admin_events: account::new_event_handle(sender),
             accept_admin_events: account::new_event_handle(sender),
+            add_operator_events: account::new_event_handle(sender),
+            remove_operator_events: account::new_event_handle(sender),
         });
     }
 
@@ -59,6 +73,33 @@ module momo_movement::role {
         role.admin = role.pending_admin;
         role.pending_admin = ZERO_ADDRESS;
         event::emit_event(&mut role.accept_admin_events, role.admin);
+    }
+
+    public entry fun add_operator(sender: &signer, operator: address) acquires Role {
+        only_admin(sender);
+        assert!(!is_operator(operator), E_ALREADY_OPERATOR);
+
+        let role = borrow_global_mut<Role>(@momo_movement);
+        table_with_length::add(&mut role.operator_list, operator, true);
+        event::emit_event(&mut role.add_operator_events, operator);
+    }
+
+    public entry fun remove_operator(sender: &signer, operator: address) acquires Role {
+        only_admin(sender);
+        assert!(is_operator(operator), E_NOT_OPERATOR);
+
+        let role = borrow_global_mut<Role>(@momo_movement);
+        table_with_length::remove(&mut role.operator_list, operator);
+        event::emit_event(&mut role.remove_operator_events, operator);
+    }
+
+    public fun only_operator(sender: &signer) acquires Role {
+        assert!(is_operator(signer::address_of(sender)), E_NOT_OPERATOR);
+    }
+
+    public fun is_operator(account: address): bool acquires Role {
+        let role = borrow_global<Role>(@momo_movement);
+        table_with_length::contains(&role.operator_list, account)
     }
 
     /// get pending admin address
@@ -121,6 +162,34 @@ module momo_movement::role {
     fun test_only_pending_admin(deployer: signer, attacker: signer) acquires Role {
         init_for_testing(&deployer);
         only_pending_admin(&attacker);
+    }
+
+    #[test(deployer = @momo_movement, operator1 = @test_operator, operator2 = @test_attacker)]
+    fun test_add_and_remove_operator(deployer: signer, operator1: address, operator2: address) acquires Role {
+        init_for_testing(&deployer);
+        let deployer_address = signer::address_of(&deployer);
+
+        let is_operator1= is_operator(operator1);
+        assert!(!is_operator1, 0);
+        let is_operator2= is_operator(operator2);
+        assert!(!is_operator2, 1);
+        let is_operator3= is_operator(deployer_address);
+        assert!(is_operator3, 2);
+
+        add_operator(&deployer, operator1);
+        add_operator(&deployer, operator2);
+
+        is_operator1 = is_operator(operator1);
+        assert!(is_operator1, 3);
+        is_operator2 = is_operator(operator2);
+        assert!(is_operator2, 4);
+        is_operator3 = is_operator(deployer_address);
+        assert!(is_operator3, 5);
+
+        remove_operator(&deployer, operator1);
+
+        is_operator1= is_operator(operator1);
+        assert!(!is_operator1, 6);
     }
 
     #[test_only]

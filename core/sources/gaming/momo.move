@@ -12,7 +12,7 @@ module momo_movement::momo {
     use aptos_framework::event::EventHandle;
 
     use momo_movement::momo_coin;
-    use momo_movement::role::{only_admin, get_admin};
+    use momo_movement::role::{get_admin, only_operator};
 
     #[test_only]
     use std::string::utf8;
@@ -68,7 +68,7 @@ module momo_movement::momo {
     }
 
     public entry fun create_resource_account(sender: &signer, user_account_hash: string::String) acquires MomoGlobals {
-        only_admin(sender);
+        only_operator(sender);
 
         let resource_address = calculate_resource_account_address(user_account_hash);
 
@@ -105,7 +105,7 @@ module momo_movement::momo {
     }
 
     public entry fun mint_token(sender: &signer, receipt: address, uni_id: string::String, amount: u64) acquires MomoGlobals {
-        only_admin(sender);
+        only_operator(sender);
 
         let receipt_signer = &try_get_resource_account_signer(receipt);
         momo_coin::mint_internal(receipt_signer, amount);
@@ -119,7 +119,7 @@ module momo_movement::momo {
     }
 
     public entry fun batch_mint_token(sender: &signer, receipts: vector<address>, uni_id: string::String, amount: u64) acquires MomoGlobals {
-        only_admin(sender);
+        only_operator(sender);
 
         let num_receipt = vector::length(&receipts);
         let i = 0;
@@ -131,7 +131,7 @@ module momo_movement::momo {
     }
 
     public entry fun transfer_token(sender: &signer, from: address, to: address, uni_id: string::String, amount: u64) acquires MomoGlobals {
-        only_admin(sender);
+        only_operator(sender);
 
         let from_signer = &try_get_resource_account_signer(from);
         momo_coin::transfer_internal(from_signer, to, amount);
@@ -146,7 +146,7 @@ module momo_movement::momo {
     }
 
     public entry fun referral_bonus(sender: &signer, inviter: address, uni_id: string::String, amount: u64) acquires MomoGlobals {
-        only_admin(sender);
+        only_operator(sender);
 
         let inviter_signer = &try_get_resource_account_signer(inviter);
         momo_coin::mint_internal(inviter_signer, amount);

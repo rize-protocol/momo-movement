@@ -5,6 +5,7 @@ version = '0.0.1'
 [addresses]
 momo_movement = '0xe6578fbaccd4c937b27cb836a76a78c493d34310bdb214d95e8753ee06719f60'
 test_admin = '0xaa'
+test_operator = '0xbb'
 test_attacker = '0xcc'
 
 [dependencies]
