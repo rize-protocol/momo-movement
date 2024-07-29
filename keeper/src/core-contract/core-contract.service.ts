@@ -121,7 +121,6 @@ export class CoreContractService {
       function: `${this.contractId}::momo::mint_token`,
       functionArguments: [receipt, uniId, amountInWei],
     });
-    return txs;
   }
 
   async batchMintToken(
@@ -134,7 +133,6 @@ export class CoreContractService {
       function: `${this.contractId}::momo::batch_mint_token`,
       functionArguments: [receipts, uniId, amountInWei],
     });
-    return txs;
   }
 
   async transferToken(
@@ -147,7 +145,6 @@ export class CoreContractService {
       function: `${this.contractId}::momo::transfer_token`,
       functionArguments: [from, to, uniId, amountInWei],
     });
-    return txs;
   }
 
   async referralBonus(
@@ -160,7 +157,6 @@ export class CoreContractService {
       function: `${this.contractId}::momo::referral_bonus`,
       functionArguments: [inviter, uniId, amountInWei],
     });
-    return txs;
   }
 
   async addOperator(account: string) {
