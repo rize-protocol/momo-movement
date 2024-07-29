@@ -19,6 +19,8 @@ secret-manager:
 
 aptos:
   clientUrl: https://aptos.testnet.suzuka.movementlabs.xyz/v1
+  faucet: https://faucet.testnet.suzuka.movementlabs.xyz
+  indexer: https://aptos.devnet.imola.movementlabs.xyz/indexer/v1/graphql
   network: testnet
 
 core-contract:

@@ -31,7 +31,10 @@ export class TestService {
       return;
     }
 
-    const tx = await this.coreContractService.createResourceAccount(userAccountHash);
+    const tx = await this.coreContractService.createResourceAccountSimple({
+      sender: this.walletService.operator.accountAddress,
+      userAccountHash,
+    });
 
     const simulateRes = await this.walletService.simulateTransaction(tx);
     if (!simulateRes.success) {

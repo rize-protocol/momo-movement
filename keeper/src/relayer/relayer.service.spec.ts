@@ -98,7 +98,7 @@ describe('relayerService test', () => {
     const command2: Command = { type: 'create_resource_account', userAccountHash: userAccountHash2 };
     redisService.rpush(commandRedisKey, JSON.stringify(command1), JSON.stringify(command2));
 
-    await timeService.sleep(20000); // sleep 10s
+    await timeService.sleep(8000); // sleep 10s
 
     const resourceAccount1 = await coreContractService.tryGetUserResourceAccount(userAccountHash1);
     expect(resourceAccount1).toBeDefined();
@@ -114,7 +114,7 @@ describe('relayerService test', () => {
     const command4: Command = { type: 'mint_token', receipt: resourceAccount2!, uniId: nanoid(), amount: mintAmount2 };
     redisService.rpush(commandRedisKey, JSON.stringify(command3), JSON.stringify(command4));
 
-    await timeService.sleep(20000); // sleep 10s
+    await timeService.sleep(8000); // sleep 10s
 
     const balance1 = await coreContractService.momoBalance(resourceAccount1!);
     const balance2 = await coreContractService.momoBalance(resourceAccount2!);

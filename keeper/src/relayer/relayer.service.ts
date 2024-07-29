@@ -1,3 +1,4 @@
+import { Aptos, InputGenerateTransactionPayloadData, TransactionWorkerEventsEnum } from '@aptos-labs/ts-sdk';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -5,6 +6,7 @@ import BigNumber from 'bignumber.js';
 
 import { RelayerConfig } from '@/common/config/types';
 import { RedisService } from '@/common/services/redis.service';
+import { TimeService } from '@/common/services/time.service';
 import { CoreContractService } from '@/core-contract/core-contract.service';
 import { Command } from '@/relayer/types';
 import { WalletService } from '@/wallet/wallet.service';
@@ -22,6 +24,8 @@ export class RelayerService {
     private readonly coreContractService: CoreContractService,
     private readonly walletService: WalletService,
     private readonly redisService: RedisService,
+    private readonly aptos: Aptos,
+    private readonly timeService: TimeService,
   ) {
     const relayerConfig = this.configService.get<RelayerConfig>('relayer');
     if (!relayerConfig) {
@@ -31,44 +35,75 @@ export class RelayerService {
   }
 
   @Cron(CronExpression.EVERY_SECOND)
-  async cronCommand() {
+  async cronRelay() {
     if (this.isRunning) {
       return;
     }
     this.isRunning = true;
 
     try {
-      while (true) {
-        const commandStr = await this.redisService.lpop(this.commandRedisKey);
-        if (!commandStr) {
-          this.logger.log('[cronCommand] do not have new command, return');
-          break;
-        }
-
-        await this.handleCommand(commandStr);
-      }
+      await this.handleRelay();
     } finally {
       this.isRunning = false;
     }
   }
 
-  private async handleCommand(commandStr: string) {
+  private async handleRelay() {
+    const batch = 100;
+    const txs: InputGenerateTransactionPayloadData[] = [];
+    for (let i = 0; i < batch; i++) {
+      const commandStr = await this.redisService.lpop(this.commandRedisKey);
+      if (!commandStr) {
+        break;
+      }
+
+      await this.handleCommand(txs, commandStr);
+    }
+    if (txs.length === 0) {
+      this.logger.log('[handleRelay] do not have new transactions, return');
+      return;
+    }
+
+    this.aptos.transaction.batch.forSingleAccount({ sender: this.walletService.operator, data: txs });
+    this.aptos.transaction.batch.on(TransactionWorkerEventsEnum.TransactionSent, async (data) => {
+      this.logger.log(`[handleRelay] transaction sent, hash: ${data.transactionHash}`);
+    });
+    let success = 0;
+    this.aptos.transaction.batch.on(TransactionWorkerEventsEnum.TransactionExecuted, async (data) => {
+      this.logger.log(`[handleRelay] transaction executed, hash: ${data.transactionHash}`);
+      success++;
+    });
+
+    let executing = true;
+    this.aptos.transaction.batch.on(TransactionWorkerEventsEnum.ExecutionFinish, async () => {
+      this.logger.log(`[handleRelay] success: ${success}, total: ${txs.length}`);
+      executing = false;
+      this.aptos.transaction.batch.removeAllListeners();
+    });
+
+    while (executing) {
+      await this.timeService.sleep(500);
+    }
+    this.logger.log(`[handleRelay] done`);
+  }
+
+  private async handleCommand(txs: InputGenerateTransactionPayloadData[], commandStr: string) {
     this.logger.log(`[handleCommand] command: ${commandStr}`);
 
     const command = JSON.parse(commandStr) as Command;
     switch (command.type) {
       case 'create_resource_account':
-        await this.handleCreateResourceAccount(command.userAccountHash);
+        await this.handleCreateResourceAccount(txs, command.userAccountHash);
         break;
       case 'mint_token':
-        await this.handleMintToken({
+        await this.handleMintToken(txs, {
           receipt: command.receipt,
           uniId: command.uniId,
           amount: new BigNumber(command.amount),
         });
         break;
       case 'transfer_token':
-        await this.handleTransferToken({
+        await this.handleTransferToken(txs, {
           from: command.from,
           to: command.to,
           uniId: command.uniId,
@@ -76,7 +111,7 @@ export class RelayerService {
         });
         break;
       case 'referral_bonus':
-        await this.handleReferralToken({
+        await this.handleReferralToken(txs, {
           inviter: command.inviter,
           uniId: command.uniId,
           amount: new BigNumber(command.amount),
@@ -87,7 +122,7 @@ export class RelayerService {
     }
   }
 
-  private async handleCreateResourceAccount(userAccountHash: string) {
+  private async handleCreateResourceAccount(txs: InputGenerateTransactionPayloadData[], userAccountHash: string) {
     const resourceAccount = await this.coreContractService.tryGetUserResourceAccount(userAccountHash);
     if (resourceAccount) {
       this.logger.log(
@@ -96,19 +131,14 @@ export class RelayerService {
       return;
     }
 
-    const tx = await this.coreContractService.createResourceAccount(userAccountHash);
-    const simulateRes = await this.walletService.simulateTransaction(tx);
-    if (!simulateRes.success) {
-      throw new Error(`[handleCreateResourceAccount] simulate error: ${JSON.stringify(simulateRes)}`);
-    }
-
-    const committedTxn = await this.walletService.signAndSubmitTransaction(tx);
-    await this.walletService.waitForTransaction(committedTxn.hash);
-    this.logger.log(`[handleCreateResourceAccount] create resource account hash: ${committedTxn.hash} done`);
+    await this.coreContractService.createResourceAccount(txs, userAccountHash);
   }
 
-  private async handleMintToken(input: { receipt: string; uniId: string; amount: BigNumber }) {
-    const { receipt, uniId, amount } = input;
+  private async handleMintToken(
+    txs: InputGenerateTransactionPayloadData[],
+    input: { receipt: string; uniId: string; amount: BigNumber },
+  ) {
+    const { receipt } = input;
 
     const exists = await this.coreContractService.resourceAccountExists(receipt);
     if (!exists) {
@@ -116,19 +146,14 @@ export class RelayerService {
       return;
     }
 
-    const tx = await this.coreContractService.mintToken(receipt, uniId, amount);
-    const simulateRes = await this.walletService.simulateTransaction(tx);
-    if (!simulateRes.success) {
-      throw new Error(`[handleMintToken] simulate error: ${JSON.stringify(simulateRes)}`);
-    }
-
-    const committedTxn = await this.walletService.signAndSubmitTransaction(tx);
-    await this.walletService.waitForTransaction(committedTxn.hash);
-    this.logger.log(`[handleMintToken] mint token hash: ${committedTxn.hash} done`);
+    await this.coreContractService.mintToken(txs, input);
   }
 
-  private async handleTransferToken(input: { from: string; to: string; uniId: string; amount: BigNumber }) {
-    const { from, to, uniId, amount } = input;
+  private async handleTransferToken(
+    txs: InputGenerateTransactionPayloadData[],
+    input: { from: string; to: string; uniId: string; amount: BigNumber },
+  ) {
+    const { from } = input;
 
     const exists = await this.coreContractService.resourceAccountExists(from);
     if (!exists) {
@@ -136,19 +161,14 @@ export class RelayerService {
       return;
     }
 
-    const tx = await this.coreContractService.transferToken(from, to, uniId, amount);
-    const simulateRes = await this.walletService.simulateTransaction(tx);
-    if (!simulateRes.success) {
-      throw new Error(`[handleTransferToken] simulate error: ${JSON.stringify(simulateRes)}`);
-    }
-
-    const committedTxn = await this.walletService.signAndSubmitTransaction(tx);
-    await this.walletService.waitForTransaction(committedTxn.hash);
-    console.log(`[handleTransferToken] transfer token hash: ${committedTxn.hash} done`);
+    await this.coreContractService.transferToken(txs, input);
   }
 
-  private async handleReferralToken(input: { inviter: string; uniId: string; amount: BigNumber }) {
-    const { inviter, uniId, amount } = input;
+  private async handleReferralToken(
+    txs: InputGenerateTransactionPayloadData[],
+    input: { inviter: string; uniId: string; amount: BigNumber },
+  ) {
+    const { inviter } = input;
 
     const exists = await this.coreContractService.resourceAccountExists(inviter);
     if (!exists) {
@@ -156,14 +176,6 @@ export class RelayerService {
       return;
     }
 
-    const tx = await this.coreContractService.referralBonus(inviter, uniId, amount);
-    const simulateRes = await this.walletService.simulateTransaction(tx);
-    if (!simulateRes.success) {
-      throw new Error(`[handleReferralToken] simulate error: ${JSON.stringify(simulateRes)}`);
-    }
-
-    const committedTxn = await this.walletService.signAndSubmitTransaction(tx);
-    await this.walletService.waitForTransaction(committedTxn.hash);
-    console.log(`[handleReferralToken] transfer token hash: ${committedTxn.hash} done`);
+    await this.coreContractService.referralBonus(txs, input);
   }
 }

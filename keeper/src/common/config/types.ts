@@ -4,6 +4,7 @@ export interface AppConfig {
   'secret-manager': SecretManagerConfig;
   aptos: MovementAptosConfig;
   'core-contract': CoreContractConfig;
+  'operator-list': SourceValue[];
   relayer: RelayerConfig;
   monitoring: MonitoringConfig;
 }
@@ -38,13 +39,14 @@ export interface RedisConfig {
 
 export interface MovementAptosConfig {
   clientUrl: string;
+  faucet: string;
+  indexer: string;
   network: 'mainnet' | 'testnet';
 }
 
 export interface CoreContractConfig {
   contractId: string;
   decimals: number;
-  adminPrivateKey: SourceValue;
 }
 
 export interface RelayerConfig {
