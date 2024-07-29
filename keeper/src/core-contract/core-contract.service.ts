@@ -1,5 +1,4 @@
-import { Aptos, InputGenerateTransactionPayloadData } from '@aptos-labs/ts-sdk';
-import { p as AccountAddressInput } from '@aptos-labs/ts-sdk/dist/common/accountAddress-D9blTwwp';
+import { Aptos, InputGenerateTransactionPayloadData, AccountAddressInput } from '@aptos-labs/ts-sdk';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import BigNumber from 'bignumber.js';
