@@ -26,9 +26,28 @@ aptos:
 core-contract:
   contractId: '0xe6578fbaccd4c937b27cb836a76a78c493d34310bdb214d95e8753ee06719f60'
   decimals: 6
-  adminPrivateKey:
-    source: use-value
-    value: '0xc17ac4d7eea0e03774415f446c1cd8a93bdc6a63523dfa37a33c14c7d68dc5b1'
+
+operator-list:
+    - source: use-value
+      value: '0x2afa331c7663b0ef5355ff9b1632ad249859c961c544d875573917adc12e4cac'
+    - source: use-value
+      value: '0xa97eb9fdb7d94837eec7da75f033e545df76399e73af95aa042939803f51c8fe'
+    - source: use-value
+      value: '0xe570232927e9aefad18ccdbf3c0d33933e0aea3f325bfd2a0744a86c63dc6a11'
+    - source: use-value
+      value: '0x042121d348658037466fe2df70976db40f0b3d4cdf9be0b0be08f542cca34e01'
+    - source: use-value
+      value: '0x09b7e21daa1910d49ad4fcbbbcee6b9ed1046b660d94b6f463fafc59ef17b63d'
+    - source: use-value
+      value: '0xcfc7cc5c31ca44427bfc4150602f23f235f5e45ef3be4947c429a3016c6d2e0e'
+    - source: use-value
+      value: '0xb7ad09b384a056b33ec3c9ff3ecf9a0ed77bec3887ea9498308dab6cdbe48d61'
+    - source: use-value
+      value: '0x0967947f5c0de35cc3fce8f6b297e23e60a321b1d81c85ba602c8c1cc1c9c88b'
+    - source: use-value
+      value: '0xb2d6acebef90e2142082954d19353724099950814c54cc2914f4127a040db617'
+    - source: use-value
+      value: '0xd0a3092eddea783d035463e767fd98163dd2573137a3224b9bfd430849ae36bd'
 
 relayer:
   commandRedisKey: 'momo-command-list'
