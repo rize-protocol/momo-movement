@@ -87,7 +87,7 @@ jobs:
                 docker stop \$INSTANCE_NAME || true
                 docker rm \$INSTANCE_NAME || true
                 echo "Running instance \$INSTANCE_NAME..."
-                docker run -dit --name \$INSTANCE_NAME --log-opt max-size=50m --log-opt max-file=2 --restart unless-stopped -e INSTANCE_ID=$i $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+                docker run -dit --name \$INSTANCE_NAME --log-opt max-size=50m --log-opt max-file=2 --restart unless-stopped -e INSTANCE_ID=\$i $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
               done
             
               docker system prune -fa
