@@ -82,7 +82,7 @@ jobs:
               docker pull $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
             
               echo "Starting for loop with INSTANCE_NUM=\$INSTANCE_NUM"
-              for ((i=1;i<=$INSTANCE_NUM;i++); do
+              for ((i=1;i<=\$INSTANCE_NUM;i++); do
                 echo "Inside for loop, iteration \$i"
                 INSTANCE_NAME="${ECR_REPOSITORY}_${i}"
                 echo "Stopping and removing instance \$INSTANCE_NAME if exists..."
