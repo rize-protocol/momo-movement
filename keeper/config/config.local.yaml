@@ -24,8 +24,11 @@ aptos:
   network: testnet
 
 core-contract:
-  contractId: '0x32ad3ccd424c3c01e85ae52ccc8c439ceee2dadda294eee2e0c0a209fbde463a'
+  contractId: '0x606b6b7248df25b8aaafaaeb7bdc1d272b9f1733ec17266396e863b48e7789a8'
   decimals: 6
+  adminPrivateKey:
+    source: use-value
+    value: '0xc3c67680a10bc3616fe597c451113d27e6833dcef10c909785b2122585f580ae'
 
 operator-list:
   - source: use-value
@@ -50,7 +53,8 @@ operator-list:
     value: '0xd0a3092eddea783d035463e767fd98163dd2573137a3224b9bfd430849ae36bd'
 
 relayer:
-  commandRedisKey: 'momo-command-list'
+  commandAccountRedisKey: 'momo-account-command-list'
+  commandTokenRedisKey: 'momo-token-command-list'
 
 monitoring:
   metricsNamespace: Movement-gaming

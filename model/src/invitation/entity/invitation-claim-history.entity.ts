@@ -1,7 +1,7 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
-@Entity({ name: 'game_play_history' })
-export class GamePlayHistory {
+@Entity({ name: 'invitation_claim_history' })
+export class InvitationClaimHistory {
   @PrimaryGeneratedColumn()
   id?: number;
 
@@ -11,11 +11,17 @@ export class GamePlayHistory {
   @Column()
   telegramId: number;
 
-  @Column()
-  uniIds: string;
+  @Column({ unique: true })
+  uniId: string;
 
   @Column()
   coinAmount: string;
+
+  @Column()
+  playAmount: number;
+
+  @Column()
+  extra: string;
 
   @UpdateDateColumn()
   updatedAt?: Date;

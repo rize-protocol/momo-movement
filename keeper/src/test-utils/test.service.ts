@@ -41,7 +41,7 @@ export class TestService {
       throw new Error(`[tryCreateResourceAccount] simulate error: ${JSON.stringify(simulateRes, null, 2)}`);
     }
 
-    const committedTxn = await this.walletService.signAndSubmitTransaction(tx);
+    const committedTxn = await this.walletService.operatorSignAndSubmitTransaction(tx);
     await this.walletService.waitForTransaction(committedTxn.hash);
     console.log(`[tryCreateResourceAccount] create resource account hash: ${committedTxn.hash} done`);
   }

@@ -12,7 +12,7 @@ module momo_movement::momo {
     use aptos_framework::event::EventHandle;
 
     use momo_movement::momo_coin;
-    use momo_movement::role::{get_admin, only_operator};
+    use momo_movement::role::{get_admin, only_operator, only_admin};
 
     #[test_only]
     use std::string::utf8;
@@ -42,7 +42,13 @@ module momo_movement::momo {
     }
 
     struct ReferralBonusEvent has drop, store {
-        inviter: address,
+        receipt: address,
+        uni_id: string::String,
+        amount: u64
+    }
+
+    struct TaskBonusEvent has drop, store {
+        receipt: address,
         uni_id: string::String,
         amount: u64
     }
@@ -54,6 +60,7 @@ module momo_movement::momo {
         mint_events: event::EventHandle<MintEvent>,
         transfer_events: event::EventHandle<TransferEvent>,
         referral_bonus_events: EventHandle<ReferralBonusEvent>,
+        task_bonus_events: EventHandle<TaskBonusEvent>,
     }
 
     fun init_module(sender: &signer) {
@@ -64,11 +71,12 @@ module momo_movement::momo {
             mint_events: account::new_event_handle<MintEvent>(sender),
             transfer_events: account::new_event_handle<TransferEvent>(sender),
             referral_bonus_events: account::new_event_handle<ReferralBonusEvent>(sender),
+            task_bonus_events: account::new_event_handle<TaskBonusEvent>(sender),
         })
     }
 
     public entry fun create_resource_account(sender: &signer, user_account_hash: string::String) acquires MomoGlobals {
-        only_operator(sender);
+        only_admin(sender);
 
         let resource_address = calculate_resource_account_address(user_account_hash);
 
@@ -145,15 +153,29 @@ module momo_movement::momo {
         });
     }
 
-    public entry fun referral_bonus(sender: &signer, inviter: address, uni_id: string::String, amount: u64) acquires MomoGlobals {
+    public entry fun referral_bonus(sender: &signer, receipt: address, uni_id: string::String, amount: u64) acquires MomoGlobals {
         only_operator(sender);
 
-        let inviter_signer = &try_get_resource_account_signer(inviter);
-        momo_coin::mint_internal(inviter_signer, amount);
+        let receipt_signer = &try_get_resource_account_signer(receipt);
+        momo_coin::mint_internal(receipt_signer, amount);
 
         let global = borrow_global_mut<MomoGlobals>(@momo_movement);
         event::emit_event<ReferralBonusEvent>(&mut global.referral_bonus_events, ReferralBonusEvent{
-            inviter,
+            receipt,
+            uni_id,
+            amount
+        });
+    }
+
+    public entry fun task_bonus(sender: &signer, receipt: address, uni_id: string::String, amount: u64) acquires MomoGlobals {
+        only_operator(sender);
+
+        let receipt_signer = &try_get_resource_account_signer(receipt);
+        momo_coin::mint_internal(receipt_signer, amount);
+
+        let global = borrow_global_mut<MomoGlobals>(@momo_movement);
+        event::emit_event<TaskBonusEvent>(&mut global.task_bonus_events, TaskBonusEvent{
+            receipt,
             uni_id,
             amount
         });

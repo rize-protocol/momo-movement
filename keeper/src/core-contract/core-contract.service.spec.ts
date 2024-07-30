@@ -1,9 +1,17 @@
-import { Account, Aptos, InputGenerateTransactionPayloadData, TransactionWorkerEventsEnum } from '@aptos-labs/ts-sdk';
+import {
+  Account,
+  Aptos,
+  InputGenerateTransactionPayloadData,
+  TransactionWorkerEventsEnum,
+  Ed25519PrivateKey,
+} from '@aptos-labs/ts-sdk';
 import { INestApplication } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import BigNumber from 'bignumber.js';
 import { nanoid } from 'nanoid';
 
 import { CommonModule } from '@/common/common.module';
+import { SourceValue } from '@/common/config/types';
 import { TimeService } from '@/common/services/time.service';
 import { CoreContractModule } from '@/core-contract/core-contract.module';
 import { CoreContractService } from '@/core-contract/core-contract.service';
@@ -207,6 +215,33 @@ describe('coreContractService test', () => {
   });
 
   it('add operator', async () => {
+    const configService = app.get<ConfigService>(ConfigService);
+    const operatorList = configService.get<SourceValue[]>('operator-list');
+    if (!operatorList || operatorList.length === 0) {
+      throw new Error('operator list config not found');
+    }
+
+    for (let i = 0; i < operatorList.length; i++) {
+      const operator = operatorList[i];
+
+      const privateKey = new Ed25519PrivateKey(operator.value);
+      const operatorAccount = Account.fromPrivateKey({ privateKey });
+
+      // const tx = await coreContractService.addOperator({
+      //   sender: walletService.admin.accountAddress,
+      //   operator: operatorAccount.accountAddress,
+      // });
+      //
+      // const committedTxn = await walletService.adminSignAndSubmitTransaction(tx);
+      // await walletService.waitForTransaction(committedTxn.hash);
+      // console.log(`add operator hash: ${committedTxn.hash} done`);
+
+      const isOperator = await coreContractService.isOperator(operatorAccount.accountAddress);
+      console.log(i, operatorAccount.accountAddress.toString(), isOperator);
+    }
+  });
+
+  it('operator faucet', async () => {
     const acc = Account.generate();
     console.log(acc.accountAddress.toString());
     console.log(acc.privateKey.toString());

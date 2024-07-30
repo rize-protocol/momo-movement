@@ -84,7 +84,7 @@ export class CoreContractService {
     return exists as boolean;
   }
 
-  async isOperator(account: string) {
+  async isOperator(account: string | AccountAddressInput) {
     const [viewRes] = await this.aptos.view({
       payload: {
         function: `${this.contractId}::role::is_operator`,
@@ -111,6 +111,18 @@ export class CoreContractService {
     });
   }
 
+  async mintTokenSimple(input: { sender: string; receipt: string; uniId: string; amount: BigNumber }) {
+    const { sender, receipt, uniId, amount } = input;
+    const amountInWei = amount.times(10 ** this.decimals).toFixed();
+    return this.aptos.transaction.build.simple({
+      sender,
+      data: {
+        function: `${this.contractId}::momo::mint_token`,
+        functionArguments: [receipt, uniId, amountInWei],
+      },
+    });
+  }
+
   async mintToken(
     txs: InputGenerateTransactionPayloadData[],
     input: { receipt: string; uniId: string; amount: BigNumber },
@@ -120,6 +132,18 @@ export class CoreContractService {
     txs.push({
       function: `${this.contractId}::momo::mint_token`,
       functionArguments: [receipt, uniId, amountInWei],
+    });
+  }
+
+  async batchMintTokenSimple(input: { sender: string; receipts: string[]; uniId: string; amount: BigNumber }) {
+    const { sender, receipts, uniId, amount } = input;
+    const amountInWei = amount.times(10 ** this.decimals).toFixed();
+    return this.aptos.transaction.build.simple({
+      sender,
+      data: {
+        function: `${this.contractId}::momo::batch_mint_token`,
+        functionArguments: [receipts, uniId, amountInWei],
+      },
     });
   }
 
@@ -135,6 +159,18 @@ export class CoreContractService {
     });
   }
 
+  async transferTokenSimple(input: { sender: string; from: string; to: string; uniId: string; amount: BigNumber }) {
+    const { sender, from, to, uniId, amount } = input;
+    const amountInWei = amount.times(10 ** this.decimals).toFixed();
+    return this.aptos.transaction.build.simple({
+      sender,
+      data: {
+        function: `${this.contractId}::momo::transfer_token`,
+        functionArguments: [from, to, uniId, amountInWei],
+      },
+    });
+  }
+
   async transferToken(
     txs: InputGenerateTransactionPayloadData[],
     input: { from: string; to: string; uniId: string; amount: BigNumber },
@@ -144,6 +180,18 @@ export class CoreContractService {
     txs.push({
       function: `${this.contractId}::momo::transfer_token`,
       functionArguments: [from, to, uniId, amountInWei],
+    });
+  }
+
+  async referralBonusSimple(input: { sender: string; inviter: string; uniId: string; amount: BigNumber }) {
+    const { sender, inviter, uniId, amount } = input;
+    const amountInWei = amount.times(10 ** this.decimals).toFixed();
+    return this.aptos.transaction.build.simple({
+      sender,
+      data: {
+        function: `${this.contractId}::momo::referral_bonus`,
+        functionArguments: [inviter, uniId, amountInWei],
+      },
     });
   }
 
@@ -159,8 +207,14 @@ export class CoreContractService {
     });
   }
 
-  async addOperator(account: string) {
-    const isOperator = await this.isOperator(account);
-    console.log(isOperator);
+  async addOperator(input: { sender: string | AccountAddressInput; operator: string | AccountAddressInput }) {
+    const { sender, operator } = input;
+    return this.aptos.transaction.build.simple({
+      sender,
+      data: {
+        function: `${this.contractId}::role::add_operator`,
+        functionArguments: [operator],
+      },
+    });
   }
 }

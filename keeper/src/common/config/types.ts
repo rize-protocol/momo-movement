@@ -47,10 +47,12 @@ export interface MovementAptosConfig {
 export interface CoreContractConfig {
   contractId: string;
   decimals: number;
+  adminPrivateKey: SourceValue;
 }
 
 export interface RelayerConfig {
-  commandRedisKey: string;
+  commandAccountRedisKey: string;
+  commandTokenRedisKey: string;
 }
 
 export interface MonitoringConfig {

@@ -13,9 +13,13 @@ import { WalletService } from '@/wallet/wallet.service';
 
 @Injectable()
 export class RelayerService {
-  private isRunning = false;
+  private isAccountRunning = false;
 
-  private readonly commandRedisKey: string;
+  private isTokenRunning = false;
+
+  private readonly commandAccountRedisKey: string;
+
+  private readonly commandTokenRedisKey: string;
 
   private readonly logger = new Logger(RelayerService.name);
 
@@ -31,28 +35,77 @@ export class RelayerService {
     if (!relayerConfig) {
       throw new Error('relayer config not found');
     }
-    this.commandRedisKey = relayerConfig.commandRedisKey;
+    this.commandAccountRedisKey = relayerConfig.commandAccountRedisKey;
+    this.commandTokenRedisKey = relayerConfig.commandTokenRedisKey;
   }
 
   @Cron(CronExpression.EVERY_SECOND)
-  async cronRelay() {
-    if (this.isRunning) {
+  async cronRelayAccount() {
+    const instanceId = parseInt(process.env.INSTANCE_ID ?? '0', 10);
+    if (instanceId > 1) {
       return;
     }
-    this.isRunning = true;
+
+    if (this.isAccountRunning) {
+      return;
+    }
+    this.isAccountRunning = true;
 
     try {
-      await this.handleRelay();
+      await this.handleRelayAccount();
     } finally {
-      this.isRunning = false;
+      this.isAccountRunning = false;
     }
   }
 
-  private async handleRelay() {
+  @Cron(CronExpression.EVERY_SECOND)
+  async cronRelayToken() {
+    if (this.isTokenRunning) {
+      return;
+    }
+    this.isTokenRunning = true;
+
+    try {
+      await this.handleRelayToken();
+    } finally {
+      this.isTokenRunning = false;
+    }
+  }
+
+  private async handleRelayAccount() {
+    const commandStr = (await this.redisService.lpop(this.commandAccountRedisKey)) as string;
+    if (!commandStr) {
+      // this.logger.log('[handleRelayAccount] do not have new transactions, return');
+      return;
+    }
+    const command = JSON.parse(commandStr) as Command;
+
+    if (command.type !== 'create_resource_account') {
+      throw new Error(`[handleRelayAccount] invalid command: ${commandStr}`);
+    }
+
+    const resourceAccount = await this.coreContractService.tryGetUserResourceAccount(command.userAccountHash);
+    if (resourceAccount) {
+      this.logger.log(
+        `[handleRelayAccount] resourceAccount: ${resourceAccount} exist, hash: ${command.userAccountHash}, return`,
+      );
+      return;
+    }
+
+    const tx = await this.coreContractService.createResourceAccountSimple({
+      sender: this.walletService.admin.accountAddress,
+      userAccountHash: command.userAccountHash,
+    });
+    const committedTxn = await this.walletService.adminSignAndSubmitTransaction(tx);
+    await this.walletService.waitForTransaction(committedTxn.hash);
+    this.logger.log(`[handleRelayAccount] create resource account hash: ${committedTxn.hash} done`);
+  }
+
+  private async handleRelayToken() {
     const batch = 100;
     const txs: InputGenerateTransactionPayloadData[] = [];
     for (let i = 0; i < batch; i++) {
-      const commandStr = await this.redisService.lpop(this.commandRedisKey);
+      const commandStr = await this.redisService.lpop(this.commandTokenRedisKey);
       if (!commandStr) {
         break;
       }
@@ -60,23 +113,23 @@ export class RelayerService {
       await this.handleCommand(txs, commandStr);
     }
     if (txs.length === 0) {
-      this.logger.log('[handleRelay] do not have new transactions, return');
+      // this.logger.log('[handleRelayToken] do not have new transactions, return');
       return;
     }
 
     this.aptos.transaction.batch.forSingleAccount({ sender: this.walletService.operator, data: txs });
     this.aptos.transaction.batch.on(TransactionWorkerEventsEnum.TransactionSent, async (data) => {
-      this.logger.log(`[handleRelay] transaction sent, hash: ${data.transactionHash}`);
+      this.logger.log(`[handleRelayToken] transaction sent, hash: ${data.transactionHash}`);
     });
     let success = 0;
     this.aptos.transaction.batch.on(TransactionWorkerEventsEnum.TransactionExecuted, async (data) => {
-      this.logger.log(`[handleRelay] transaction executed, hash: ${data.transactionHash}`);
+      this.logger.log(`[handleRelayToken] transaction executed, hash: ${data.transactionHash}`);
       success++;
     });
 
     let executing = true;
     this.aptos.transaction.batch.on(TransactionWorkerEventsEnum.ExecutionFinish, async () => {
-      this.logger.log(`[handleRelay] success: ${success}, total: ${txs.length}`);
+      this.logger.log(`[handleRelayToken] success: ${success}, total: ${txs.length}`);
       executing = false;
       this.aptos.transaction.batch.removeAllListeners();
     });
@@ -84,7 +137,7 @@ export class RelayerService {
     while (executing) {
       await this.timeService.sleep(500);
     }
-    this.logger.log(`[handleRelay] done`);
+    this.logger.log(`[handleRelayToken] done`);
   }
 
   private async handleCommand(txs: InputGenerateTransactionPayloadData[], commandStr: string) {
