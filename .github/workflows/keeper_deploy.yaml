@@ -47,15 +47,15 @@ jobs:
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
-
-      - name: Build, tag, and push image to Amazon ECR
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: momo-movement-keeper
-          IMAGE_TAG: 1.0.${{ github.run_number }}
-        run: |
-          docker build -f Dockerfile.keeper -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+#
+#      - name: Build, tag, and push image to Amazon ECR
+#        env:
+#          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+#          ECR_REPOSITORY: momo-movement-keeper
+#          IMAGE_TAG: 1.0.${{ github.run_number }}
+#        run: |
+#          docker build -f Dockerfile.keeper -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+#          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
       - name: SSH and Deploy via Jump Host
         uses: appleboy/ssh-action@v0.1.10
@@ -68,12 +68,12 @@ jobs:
           script: |
             ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}
             ECR_REPOSITORY=momo-movement-keeper
-            IMAGE_TAG=1.0.${{ github.run_number }}
+            IMAGE_TAG=1.0.12
             FIRST_IP=$(echo "${{ env.TARGET_HOST }}" | cut -d' ' -f1)
             INSTANCE_NUM=${{  env.INSTANCE_NUM  }}
             ssh ${{ vars.TARGET_USERNAME }}@$FIRST_IP << EOF
               aws ecr get-login-password --region us-west-1 | docker login --username AWS --password-stdin $ECR_REGISTRY
-              echo "final: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+              echo "final: \$ECR_REGISTRY/\$ECR_REPOSITORY:\$IMAGE_TAG \$INSTANCE_NUM"
               docker pull $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
               for ((i=1;i<=$INSTANCE_NUM;i++); do
                 INSTANCE_NAME="${ECR_REPOSITORY}_${i}"
