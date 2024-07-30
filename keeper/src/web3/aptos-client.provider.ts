@@ -15,6 +15,8 @@ export const aptosClientProvider: FactoryProvider = {
     const config = new AptosConfig({
       network: Network.CUSTOM,
       fullnode: movementAptosConfig.clientUrl,
+      faucet: movementAptosConfig.faucet,
+      indexer: movementAptosConfig.indexer,
     });
 
     return new Aptos(config);

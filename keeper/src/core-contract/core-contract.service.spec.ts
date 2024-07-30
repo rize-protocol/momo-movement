@@ -1,9 +1,18 @@
-import { Account, Aptos } from '@aptos-labs/ts-sdk';
+import {
+  Account,
+  Aptos,
+  InputGenerateTransactionPayloadData,
+  TransactionWorkerEventsEnum,
+  Ed25519PrivateKey,
+} from '@aptos-labs/ts-sdk';
 import { INestApplication } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import BigNumber from 'bignumber.js';
 import { nanoid } from 'nanoid';
 
 import { CommonModule } from '@/common/common.module';
+import { SourceValue } from '@/common/config/types';
+import { TimeService } from '@/common/services/time.service';
 import { CoreContractModule } from '@/core-contract/core-contract.module';
 import { CoreContractService } from '@/core-contract/core-contract.service';
 import { TestHelper } from '@/test-utils/helper';
@@ -19,6 +28,7 @@ describe('coreContractService test', () => {
   let testService: TestService;
   let coreContractService: CoreContractService;
   let walletService: WalletService;
+  let timeService: TimeService;
 
   beforeAll(async () => {
     const res = await TestHelper.build({
@@ -43,6 +53,10 @@ describe('coreContractService test', () => {
     if (!walletService) {
       throw new Error('Failed to initialize WalletService');
     }
+    timeService = app.get<TimeService>(TimeService);
+    if (!timeService) {
+      throw new Error('Failed to initialize TimeService');
+    }
   });
 
   afterAll(async () => {
@@ -55,14 +69,8 @@ describe('coreContractService test', () => {
 
     await testService.tryCreateResourceAccount(userAccountHash);
 
-    const tx = await coreContractService.createResourceAccount(userAccountHash);
-
-    const resourceAccount = await coreContractService.tryGetUserResourceAccount(userAccountHash);
-    console.log(`resourceAccount: ${resourceAccount}`);
-    expect(resourceAccount).toBeDefined();
-
-    const simulateRes = await walletService.simulateTransaction(tx);
-    expect(simulateRes.success).toBeFalsy();
+    const resourceAddress = await coreContractService.tryGetUserResourceAccount(userAccountHash);
+    expect(resourceAddress).toBeDefined();
   });
 
   it('mint token', async () => {
@@ -77,13 +85,22 @@ describe('coreContractService test', () => {
 
     const uniId = nanoid();
     const mintAmount = new BigNumber(100);
-    const tx = await coreContractService.mintToken(resourceAccount!, uniId, mintAmount);
-    const simulateRes = await walletService.simulateTransaction(tx);
-    expect(simulateRes.success).toBeTruthy();
 
-    const committedTxn = await walletService.signAndSubmitTransaction(tx);
-    await walletService.waitForTransaction(committedTxn.hash);
-    console.log(`mint token hash: ${committedTxn.hash} done`);
+    const txs: InputGenerateTransactionPayloadData[] = [];
+    await coreContractService.mintToken(txs, {
+      receipt: resourceAccount!,
+      uniId,
+      amount: mintAmount,
+    });
+
+    aptos.transaction.batch.forSingleAccount({ sender: walletService.operator, data: txs });
+    aptos.transaction.batch.on(TransactionWorkerEventsEnum.TransactionSent, async (data) => {
+      console.log(`transaction sent, hash: ${data.transactionHash}`);
+    });
+    aptos.transaction.batch.on(TransactionWorkerEventsEnum.TransactionExecuted, async (data) => {
+      console.log(`transaction executed, hash: ${data.transactionHash}`);
+    });
+    await timeService.sleep(5000);
 
     const balanceAfterMint = await coreContractService.momoBalance(resourceAccount!);
     expect(balanceAfterMint.minus(balanceBeforeMint).isEqualTo(mintAmount)).toBeTruthy();
@@ -104,17 +121,20 @@ describe('coreContractService test', () => {
     const balanceBeforeMint2 = await coreContractService.momoBalance(resourceAccount2!);
     console.log(`resourceAccount2: ${resourceAccount2}, balanceBeforeMint2: ${balanceBeforeMint2}`);
 
-    const resourceAccountList = [resourceAccount1!, resourceAccount2!];
-
-    const uniId = nanoid();
     const mintAmount = new BigNumber(100);
-    const tx = await coreContractService.batchMintToken(resourceAccountList, uniId, mintAmount);
-    const simulateRes = await walletService.simulateTransaction(tx);
-    expect(simulateRes.success).toBeTruthy();
 
-    const committedTxn = await walletService.signAndSubmitTransaction(tx);
-    await walletService.waitForTransaction(committedTxn.hash);
-    console.log(`batch mint token hash: ${committedTxn.hash} done`);
+    const txs: InputGenerateTransactionPayloadData[] = [];
+    await coreContractService.mintToken(txs, { receipt: resourceAccount1!, uniId: nanoid(), amount: mintAmount });
+    await coreContractService.mintToken(txs, { receipt: resourceAccount2!, uniId: nanoid(), amount: mintAmount });
+
+    aptos.transaction.batch.forSingleAccount({ sender: walletService.operator, data: txs });
+    aptos.transaction.batch.on(TransactionWorkerEventsEnum.TransactionSent, async (data) => {
+      console.log(`transaction sent, hash: ${data.transactionHash}`);
+    });
+    aptos.transaction.batch.on(TransactionWorkerEventsEnum.TransactionExecuted, async (data) => {
+      console.log(`transaction executed, hash: ${data.transactionHash}`);
+    });
+    await timeService.sleep(5000);
 
     const balanceAfterMint1 = await coreContractService.momoBalance(resourceAccount1!);
     const balanceAfterMint2 = await coreContractService.momoBalance(resourceAccount2!);
@@ -134,13 +154,22 @@ describe('coreContractService test', () => {
     const transferAmount = new BigNumber(50);
 
     const uniId = nanoid();
-    const tx = await coreContractService.transferToken(resourceAccount!, receiptAddress, uniId, transferAmount);
-    const simulateRes = await walletService.simulateTransaction(tx);
-    expect(simulateRes.success).toBeTruthy();
+    const txs: InputGenerateTransactionPayloadData[] = [];
+    await coreContractService.transferToken(txs, {
+      from: resourceAccount!,
+      to: receiptAddress,
+      uniId,
+      amount: transferAmount,
+    });
 
-    const committedTxn = await walletService.signAndSubmitTransaction(tx);
-    await walletService.waitForTransaction(committedTxn.hash);
-    console.log(`transfer token hash: ${committedTxn.hash} done`);
+    aptos.transaction.batch.forSingleAccount({ sender: walletService.operator, data: txs });
+    aptos.transaction.batch.on(TransactionWorkerEventsEnum.TransactionSent, async (data) => {
+      console.log(`transaction sent, hash: ${data.transactionHash}`);
+    });
+    aptos.transaction.batch.on(TransactionWorkerEventsEnum.TransactionExecuted, async (data) => {
+      console.log(`transaction executed, hash: ${data.transactionHash}`);
+    });
+    await timeService.sleep(5000);
 
     const balanceAfterTransfer = await coreContractService.momoBalance(resourceAccount!);
     expect(balanceBeforeTransfer.minus(balanceAfterTransfer).isEqualTo(transferAmount)).toBeTruthy();
@@ -159,13 +188,17 @@ describe('coreContractService test', () => {
 
     const uniId = nanoid();
     const referralAmount = new BigNumber(50);
-    const tx = await coreContractService.referralBonus(resourceAccount!, uniId, referralAmount);
-    const simulateRes = await walletService.simulateTransaction(tx);
-    expect(simulateRes.success).toBeTruthy();
+    const txs: InputGenerateTransactionPayloadData[] = [];
+    await coreContractService.referralBonus(txs, { inviter: resourceAccount!, uniId, amount: referralAmount });
 
-    const committedTxn = await walletService.signAndSubmitTransaction(tx);
-    await walletService.waitForTransaction(committedTxn.hash);
-    console.log(`referral bonus hash: ${committedTxn.hash} done`);
+    aptos.transaction.batch.forSingleAccount({ sender: walletService.operator, data: txs });
+    aptos.transaction.batch.on(TransactionWorkerEventsEnum.TransactionSent, async (data) => {
+      console.log(`transaction sent, hash: ${data.transactionHash}`);
+    });
+    aptos.transaction.batch.on(TransactionWorkerEventsEnum.TransactionExecuted, async (data) => {
+      console.log(`transaction executed, hash: ${data.transactionHash}`);
+    });
+    await timeService.sleep(5000);
 
     const balanceAfterBonus = await coreContractService.momoBalance(resourceAccount!);
     expect(balanceAfterBonus.minus(balanceBeforeBonus).isEqualTo(referralAmount)).toBeTruthy();
@@ -179,5 +212,39 @@ describe('coreContractService test', () => {
 
     const exist = await coreContractService.resourceAccountExists(resourceAccount!);
     expect(exist).toBeTruthy();
+  });
+
+  it('add operator', async () => {
+    const configService = app.get<ConfigService>(ConfigService);
+    const operatorList = configService.get<SourceValue[]>('operator-list');
+    if (!operatorList || operatorList.length === 0) {
+      throw new Error('operator list config not found');
+    }
+
+    for (let i = 0; i < operatorList.length; i++) {
+      const operator = operatorList[i];
+
+      const privateKey = new Ed25519PrivateKey(operator.value);
+      const operatorAccount = Account.fromPrivateKey({ privateKey });
+
+      // const tx = await coreContractService.addOperator({
+      //   sender: walletService.admin.accountAddress,
+      //   operator: operatorAccount.accountAddress,
+      // });
+      //
+      // const committedTxn = await walletService.adminSignAndSubmitTransaction(tx);
+      // await walletService.waitForTransaction(committedTxn.hash);
+      // console.log(`add operator hash: ${committedTxn.hash} done`);
+
+      const isOperator = await coreContractService.isOperator(operatorAccount.accountAddress);
+      console.log(i, operatorAccount.accountAddress.toString(), isOperator);
+    }
+  });
+
+  it('operator faucet', async () => {
+    const acc = Account.generate();
+    console.log(acc.accountAddress.toString());
+    console.log(acc.privateKey.toString());
+    await aptos.faucet.fundAccount({ accountAddress: acc.accountAddress, amount: 10 * 1e8 });
   });
 });

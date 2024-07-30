@@ -52,17 +52,18 @@ export interface MovementAptosConfig {
 export interface CoreContractConfig {
   contractId: string;
   decimals: number;
-  adminPrivateKey: SourceValue;
 }
 
 export interface RelayerConfig {
-  commandRedisKey: string;
+  commandAccountRedisKey: string;
+  commandTokenRedisKey: string;
 }
 
 export interface GameConfig {
   totalPlay: number;
   replenishmentInterval: number;
-  coinsPerGame: string;
+  coinsPerGame: number;
+  timesPerGame: number;
 }
 
 export interface InvitationConfig {

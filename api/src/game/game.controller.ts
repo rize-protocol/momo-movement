@@ -15,10 +15,10 @@ export class GameController {
 
   @Post('play')
   async play(@CurrentUser() user: User) {
-    let uniId: string = '';
+    let uniIds: string[] = [];
     await this.entityManager.transaction(async (entityManager) => {
-      uniId = await this.gameService.play(user, entityManager);
+      uniIds = await this.gameService.play(user, entityManager);
     });
-    return { uniId };
+    return uniIds;
   }
 }

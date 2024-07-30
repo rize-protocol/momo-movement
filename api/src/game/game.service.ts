@@ -19,7 +19,9 @@ export class GameService {
 
   private readonly redisLockTime = 10000; // 10s
 
-  private readonly coinsPerGame: string;
+  private readonly coinsPerGame: number;
+
+  private readonly timesPerGame: number;
 
   constructor(
     private readonly configService: ConfigService,
@@ -35,6 +37,7 @@ export class GameService {
     this.totalPlay = gameConfig.totalPlay;
     this.replenishmentInterval = gameConfig.replenishmentInterval;
     this.coinsPerGame = gameConfig.coinsPerGame;
+    this.timesPerGame = gameConfig.timesPerGame;
   }
 
   async getPlayInfo(user: User, entityManager: EntityManager): Promise<GamePlayInfo> {
@@ -59,8 +62,6 @@ export class GameService {
       const gamePlay = await this.refreshGamePlay(user, entityManager);
       checkBadRequest(gamePlay.remainingPlays > 0 || gamePlay.extraPlays > 0, 'user remaining play is 0');
 
-      const uniId = nanoid();
-
       // save GamePlay
       if (gamePlay.extraPlays > 0) {
         gamePlay.extraPlays--;
@@ -72,26 +73,28 @@ export class GameService {
       }
       await entityManager.save(GamePlay, gamePlay);
 
+      const uniIds: string[] = [];
+      for (let i = 0; i < this.timesPerGame; i++) {
+        const uniId = nanoid();
+        // mint momo
+        await this.momoService.mintMomo({
+          user,
+          uniId,
+          momoChange: this.coinsPerGame.toString(),
+        });
+        uniIds.push(uniId);
+      }
+
       // save GameHistory
       const history: GamePlayHistory = {
         userId: user.id!,
         telegramId: user.telegramId,
-        uniId,
-        coinAmount: this.coinsPerGame,
+        uniIds: JSON.stringify(uniIds),
+        coinAmount: (this.coinsPerGame * this.timesPerGame).toString(),
       };
-      const res = await entityManager.insert(GamePlayHistory, history);
-      const historyId = res.identifiers[0].id as number;
+      await entityManager.insert(GamePlayHistory, history);
 
-      // mint momo
-      await this.momoService.mintMomo(entityManager, {
-        user,
-        uniId,
-        momoChange: this.coinsPerGame,
-        module: 'Game',
-        message: JSON.stringify({ historyId }),
-      });
-
-      return uniId;
+      return uniIds;
     } finally {
       await redisLock.release();
     }

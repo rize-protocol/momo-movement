@@ -22,7 +22,8 @@ describe('relayerService test', () => {
   let coreContractService: CoreContractService;
   let redisService: RedisService;
   let timeService: TimeService;
-  let commandRedisKey: string;
+  let commandAccountRedisKey: string;
+  let commandTokenRedisKey: string;
 
   beforeAll(async () => {
     const res = await TestHelper.build({
@@ -56,7 +57,8 @@ describe('relayerService test', () => {
     if (!relayerConfig) {
       throw new Error('relayer config not found');
     }
-    commandRedisKey = relayerConfig.commandRedisKey;
+    commandAccountRedisKey = relayerConfig.commandAccountRedisKey;
+    commandTokenRedisKey = relayerConfig.commandTokenRedisKey;
   });
 
   afterAll(async () => {
@@ -71,7 +73,7 @@ describe('relayerService test', () => {
     expect(resourceAccountBefore).toBeUndefined();
 
     const command: Command = { type: 'create_resource_account', userAccountHash };
-    redisService.rpush(commandRedisKey, JSON.stringify(command));
+    redisService.rpush(commandAccountRedisKey, JSON.stringify(command));
 
     await timeService.sleep(5000); // sleep 5s
 
@@ -79,7 +81,7 @@ describe('relayerService test', () => {
     expect(resourceAccount).toBeDefined();
     console.log(`resourceAccount: ${resourceAccount}`);
 
-    redisService.rpush(commandRedisKey, JSON.stringify(command));
+    redisService.rpush(commandAccountRedisKey, JSON.stringify(command));
     await timeService.sleep(5000); // sleep 5s
   });
 
@@ -96,9 +98,9 @@ describe('relayerService test', () => {
 
     const command1: Command = { type: 'create_resource_account', userAccountHash: userAccountHash1 };
     const command2: Command = { type: 'create_resource_account', userAccountHash: userAccountHash2 };
-    redisService.rpush(commandRedisKey, JSON.stringify(command1), JSON.stringify(command2));
+    redisService.rpush(commandAccountRedisKey, JSON.stringify(command1), JSON.stringify(command2));
 
-    await timeService.sleep(20000); // sleep 10s
+    await timeService.sleep(8000); // sleep 10s
 
     const resourceAccount1 = await coreContractService.tryGetUserResourceAccount(userAccountHash1);
     expect(resourceAccount1).toBeDefined();
@@ -112,9 +114,9 @@ describe('relayerService test', () => {
     const mintAmount2 = '50';
     const command3: Command = { type: 'mint_token', receipt: resourceAccount1!, uniId: nanoid(), amount: mintAmount1 };
     const command4: Command = { type: 'mint_token', receipt: resourceAccount2!, uniId: nanoid(), amount: mintAmount2 };
-    redisService.rpush(commandRedisKey, JSON.stringify(command3), JSON.stringify(command4));
+    redisService.rpush(commandTokenRedisKey, JSON.stringify(command3), JSON.stringify(command4));
 
-    await timeService.sleep(20000); // sleep 10s
+    await timeService.sleep(8000); // sleep 10s
 
     const balance1 = await coreContractService.momoBalance(resourceAccount1!);
     const balance2 = await coreContractService.momoBalance(resourceAccount2!);

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Invitation, InvitationCode, InvitationRelation, User } from 'movement-gaming-model';
+import { Invitation, InvitationClaimHistory, InvitationCode, InvitationRelation, User } from 'movement-gaming-model';
 import { nanoid } from 'nanoid';
 import { EntityManager } from 'typeorm';
 
@@ -78,18 +78,26 @@ export class InvitationService {
       if (rewardCoins > 0) {
         uniId = nanoid();
 
-        const levelInfo = { checkedLevel: invitationInfo.checkedLevel, uncheckedLevel: invitationInfo.unCheckedLevel };
-        await this.momoService.referralBonus(entityManager, {
+        await this.momoService.referralBonus({
           user,
           uniId,
           momoChange: rewardCoins.toString(),
-          module: 'Invitation',
-          message: JSON.stringify(levelInfo),
         });
       }
       if (rewardPlays > 0) {
         await this.gameService.addExtraPlay(user, rewardPlays, entityManager);
       }
+
+      const levelInfo = { checkedLevel: invitationInfo.checkedLevel, uncheckedLevel: invitationInfo.unCheckedLevel };
+      const history: InvitationClaimHistory = {
+        userId: user.id!,
+        telegramId: user.telegramId,
+        uniId,
+        coinAmount: rewardCoins.toString(),
+        playAmount: rewardPlays,
+        extra: JSON.stringify(levelInfo),
+      };
+      await entityManager.insert(InvitationClaimHistory, history);
 
       invitationInfo.checkedLevel = invitationInfo.unCheckedLevel;
       await entityManager.save(invitationInfo);

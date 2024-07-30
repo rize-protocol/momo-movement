@@ -97,6 +97,7 @@ module momo_movement::role {
         assert!(is_operator(signer::address_of(sender)), E_NOT_OPERATOR);
     }
 
+    #[view]
     public fun is_operator(account: address): bool acquires Role {
         let role = borrow_global<Role>(@momo_movement);
         table_with_length::contains(&role.operator_list, account)

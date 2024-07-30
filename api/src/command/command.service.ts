@@ -7,7 +7,9 @@ import { RedisService } from '@/common/services/redis.service';
 
 @Injectable()
 export class CommandService {
-  private readonly commandRedisKey: string;
+  private readonly commandAccountRedisKey: string;
+
+  private readonly commandTokenRedisKey: string;
 
   constructor(
     private readonly configService: ConfigService,
@@ -17,7 +19,8 @@ export class CommandService {
     if (!relayerConfig) {
       throw new Error('relayer config not found');
     }
-    this.commandRedisKey = relayerConfig.commandRedisKey;
+    this.commandAccountRedisKey = relayerConfig.commandAccountRedisKey;
+    this.commandTokenRedisKey = relayerConfig.commandTokenRedisKey;
   }
 
   async addCreateResourceAccount(userAccountHash: string) {
@@ -40,7 +43,16 @@ export class CommandService {
     return this.pushCommand(command);
   }
 
+  async addTaskToken(receipt: string, uniId: string, amount: string) {
+    const command: Command = { type: 'task_bonus', receipt, uniId, amount };
+    return this.pushCommand(command);
+  }
+
   private async pushCommand(command: Command) {
-    this.redisService.rpush(this.commandRedisKey, JSON.stringify(command));
+    if (command.type === 'create_resource_account') {
+      this.redisService.rpush(this.commandAccountRedisKey, JSON.stringify(command));
+    } else {
+      this.redisService.rpush(this.commandTokenRedisKey, JSON.stringify(command));
+    }
   }
 }

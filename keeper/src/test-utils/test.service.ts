@@ -31,14 +31,17 @@ export class TestService {
       return;
     }
 
-    const tx = await this.coreContractService.createResourceAccount(userAccountHash);
+    const tx = await this.coreContractService.createResourceAccountSimple({
+      sender: this.walletService.operator.accountAddress,
+      userAccountHash,
+    });
 
     const simulateRes = await this.walletService.simulateTransaction(tx);
     if (!simulateRes.success) {
       throw new Error(`[tryCreateResourceAccount] simulate error: ${JSON.stringify(simulateRes, null, 2)}`);
     }
 
-    const committedTxn = await this.walletService.signAndSubmitTransaction(tx);
+    const committedTxn = await this.walletService.operatorSignAndSubmitTransaction(tx);
     await this.walletService.waitForTransaction(committedTxn.hash);
     console.log(`[tryCreateResourceAccount] create resource account hash: ${committedTxn.hash} done`);
   }
