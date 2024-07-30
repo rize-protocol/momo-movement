@@ -1,5 +1,5 @@
 import { Aptos, InputGenerateTransactionPayloadData, TransactionWorkerEventsEnum } from '@aptos-labs/ts-sdk';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import BigNumber from 'bignumber.js';
@@ -21,7 +21,7 @@ export class RelayerService {
 
   private readonly commandTokenRedisKey: string;
 
-  private readonly logger = new Logger(RelayerService.name);
+  private readonly logger = console;
 
   constructor(
     private readonly configService: ConfigService,
@@ -170,6 +170,13 @@ export class RelayerService {
           amount: new BigNumber(command.amount),
         });
         break;
+      case 'task_bonus':
+        await this.handleTaskToken(txs, {
+          receipt: command.receipt,
+          uniId: command.uniId,
+          amount: new BigNumber(command.amount),
+        });
+        break;
       default:
         throw new Error(`Unknown command type: ${(command as Command).type}`);
     }
@@ -230,5 +237,19 @@ export class RelayerService {
     }
 
     await this.coreContractService.referralBonus(txs, input);
+  }
+
+  private async handleTaskToken(
+    txs: InputGenerateTransactionPayloadData[],
+    input: { receipt: string; uniId: string; amount: BigNumber },
+  ) {
+    const { receipt } = input;
+
+    const exists = await this.coreContractService.resourceAccountExists(receipt);
+    if (!exists) {
+      this.logger.log(`[handleTaskToken] inviter resource account: ${receipt} not exist, return`);
+    }
+
+    await this.coreContractService.taskBonus(txs, input);
   }
 }

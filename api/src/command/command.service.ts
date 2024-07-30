@@ -43,6 +43,11 @@ export class CommandService {
     return this.pushCommand(command);
   }
 
+  async addTaskToken(receipt: string, uniId: string, amount: string) {
+    const command: Command = { type: 'task_bonus', receipt, uniId, amount };
+    return this.pushCommand(command);
+  }
+
   private async pushCommand(command: Command) {
     if (command.type === 'create_resource_account') {
       this.redisService.rpush(this.commandAccountRedisKey, JSON.stringify(command));

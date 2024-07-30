@@ -14,4 +14,8 @@ export class MomoService {
   async referralBonus(input: { user: User; uniId: string; momoChange: string }) {
     await this.commandService.addReferralToken(input.user.resourceAddress, input.uniId, input.momoChange);
   }
+
+  async taskBonus(input: { user: User; uniId: string; momoChange: string }) {
+    await this.commandService.addTaskToken(input.user.resourceAddress, input.uniId, input.momoChange);
+  }
 }

@@ -207,6 +207,30 @@ export class CoreContractService {
     });
   }
 
+  async taskBonusSimple(input: { sender: string; receipt: string; uniId: string; amount: BigNumber }) {
+    const { sender, receipt, uniId, amount } = input;
+    const amountInWei = amount.times(10 ** this.decimals).toFixed();
+    return this.aptos.transaction.build.simple({
+      sender,
+      data: {
+        function: `${this.contractId}::momo::task_bonus`,
+        functionArguments: [receipt, uniId, amountInWei],
+      },
+    });
+  }
+
+  async taskBonus(
+    txs: InputGenerateTransactionPayloadData[],
+    input: { receipt: string; uniId: string; amount: BigNumber },
+  ) {
+    const { receipt, uniId, amount } = input;
+    const amountInWei = amount.times(10 ** this.decimals).toFixed();
+    txs.push({
+      function: `${this.contractId}::momo::task_bonus`,
+      functionArguments: [receipt, uniId, amountInWei],
+    });
+  }
+
   async addOperator(input: { sender: string | AccountAddressInput; operator: string | AccountAddressInput }) {
     const { sender, operator } = input;
     return this.aptos.transaction.build.simple({

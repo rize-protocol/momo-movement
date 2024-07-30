@@ -1,4 +1,9 @@
-export type Command = CreateResourceAccountCommand | MintTokenCommand | TransferTokenCommand | ReferralBonusCommand;
+export type Command =
+  | CreateResourceAccountCommand
+  | MintTokenCommand
+  | TransferTokenCommand
+  | ReferralBonusCommand
+  | TaskBonusCommand;
 
 export interface CreateResourceAccountCommand {
   type: 'create_resource_account';
@@ -23,6 +28,13 @@ export interface TransferTokenCommand {
 export interface ReferralBonusCommand {
   type: 'referral_bonus';
   inviter: string;
+  uniId: string;
+  amount: string;
+}
+
+export interface TaskBonusCommand {
+  type: 'task_bonus';
+  receipt: string;
   uniId: string;
   amount: string;
 }
