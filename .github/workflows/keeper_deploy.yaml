@@ -72,6 +72,11 @@ jobs:
             FIRST_IP=$(echo "${{ env.TARGET_HOST }}" | cut -d' ' -f1)
             INSTANCE_NUM=${{  env.INSTANCE_NUM  }}
             ssh ${{ vars.TARGET_USERNAME }}@$FIRST_IP << EOF
+              ECR_REGISTRY=$ECR_REGISTRY
+              ECR_REPOSITORY=$ECR_REPOSITORY
+              IMAGE_TAG=$IMAGE_TAG
+              INSTANCE_NUM=$INSTANCE_NUM
+            
               aws ecr get-login-password --region us-west-1 | docker login --username AWS --password-stdin $ECR_REGISTRY
               echo "final: \$ECR_REGISTRY/\$ECR_REPOSITORY:\$IMAGE_TAG \$INSTANCE_NUM"
               docker pull $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
