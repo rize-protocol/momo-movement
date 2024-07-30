@@ -82,7 +82,7 @@ jobs:
               docker pull $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
             
               for ((i=1; i<=$INSTANCE_NUM; i++)); do
-                INSTANCE_NAME="${ECR_REPOSITORY}_${i}"
+                INSTANCE_NAME="\${ECR_REPOSITORY}_\${i}"
                 echo "Stopping and removing instance \$INSTANCE_NAME if exists..."
                 docker stop $INSTANCE_NAME || true
                 docker rm $INSTANCE_NAME || true
