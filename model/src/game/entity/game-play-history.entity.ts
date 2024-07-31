@@ -9,7 +9,7 @@ export class GamePlayHistory {
   userId: number;
 
   @Column()
-  telegramId: number;
+  telegramId: string;
 
   @Column()
   uniIds: string;

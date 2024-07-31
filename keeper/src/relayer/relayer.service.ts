@@ -1,5 +1,5 @@
 import { Aptos, InputGenerateTransactionPayloadData, TransactionWorkerEventsEnum } from '@aptos-labs/ts-sdk';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import BigNumber from 'bignumber.js';
@@ -21,7 +21,7 @@ export class RelayerService {
 
   private readonly commandTokenRedisKey: string;
 
-  private readonly logger = console;
+  private readonly logger = new Logger(RelayerService.name);
 
   constructor(
     private readonly configService: ConfigService,

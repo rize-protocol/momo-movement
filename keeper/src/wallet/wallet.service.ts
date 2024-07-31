@@ -66,9 +66,9 @@ export class WalletService implements OnModuleInit {
     });
   }
 
-  async simulateTransaction(transaction: AnyRawTransaction) {
+  async adminSimulateTransaction(transaction: AnyRawTransaction) {
     const [userTransactionResponse] = await this.aptos.transaction.simulate.simple({
-      signerPublicKey: this.operatorAccount.publicKey,
+      signerPublicKey: this.adminAccount.publicKey,
       transaction,
     });
     return userTransactionResponse;

@@ -12,7 +12,7 @@ export class OverviewInfoResponse {
 }
 
 export class UserInfo {
-  telegramId: number;
+  telegramId: string;
 
   accountHash: string;
 

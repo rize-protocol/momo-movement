@@ -21,7 +21,7 @@ export class TestService {
     }
   }
 
-  async tryCreateUser(telegramId: number, referralCode: string) {
+  async tryCreateUser(telegramId: string, referralCode: string) {
     let user = await this.userService.tryGetUserByTelegramId(telegramId, this.entityManager);
     if (!user) {
       await this.userService.createUser(telegramId, referralCode, this.entityManager);
@@ -42,7 +42,7 @@ export class TestService {
 
   generateTelegramId(incr: number = 0) {
     const telegramId = Math.floor(new Date().getTime() / 1000);
-    return telegramId + incr;
+    return (telegramId + incr).toString();
   }
 
   private randomFromInterval(min: number, max: number) {

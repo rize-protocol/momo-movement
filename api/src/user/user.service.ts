@@ -22,7 +22,7 @@ export class UserService {
     private readonly redisService: RedisService,
   ) {}
 
-  async upsertUserByTelegramId(telegramId: number, entityManager: EntityManager) {
+  async upsertUserByTelegramId(telegramId: string, entityManager: EntityManager) {
     const user = await this.tryGetUserByTelegramId(telegramId, entityManager);
 
     // if user not found, return undefined
@@ -48,25 +48,27 @@ export class UserService {
     return user;
   }
 
-  async mustGetUserByTelegramId(telegramId: number, entityManager: EntityManager) {
+  async mustGetUserByTelegramId(telegramId: string, entityManager: EntityManager) {
     const user = await this.tryGetUserByTelegramId(telegramId, entityManager);
     checkBadRequest(!!user, 'user not exist');
     checkBadRequest(!!user!.resourceAddress, 'user resource address not exist');
     return user!;
   }
 
-  async tryGetUserByTelegramId(telegramId: number, entityManager: EntityManager) {
+  async tryGetUserByTelegramId(telegramId: string, entityManager: EntityManager) {
     return entityManager.findOneBy(User, { telegramId });
   }
 
-  async createUser(telegramId: number, referralCode: string, entityManager: EntityManager) {
+  async createUser(telegramId: string, referralCode: string, entityManager: EntityManager) {
     const redisLock = await this.redisService.acquireLock(`momo-create-user-${telegramId}`, this.redisLockTime);
     try {
-      const exit = await entityManager.findOneBy(User, { telegramId });
-      checkBadRequest(!exit, 'user exist!');
-
       const accountHash = this.generateUserAccountHash(telegramId);
       await this.commandService.addCreateResourceAccount(accountHash);
+
+      const exit = await entityManager.findOneBy(User, { telegramId });
+      if (exit) {
+        return;
+      }
 
       const user: User = {
         telegramId,
@@ -90,7 +92,7 @@ export class UserService {
     }
   }
 
-  private generateUserAccountHash(telegramId: number) {
+  private generateUserAccountHash(telegramId: string) {
     const rawData = { type: 'telegram', telegramId };
     const encodedData = JSON.stringify(rawData);
     return SHA224(encodedData).toString();

@@ -9,7 +9,7 @@ export class GamePlay {
   userId: number;
 
   @Column()
-  telegramId: number;
+  telegramId: string;
 
   @Column()
   totalPlays: number;

@@ -24,11 +24,11 @@ aptos:
   network: testnet
 
 core-contract:
-  contractId: '0x606b6b7248df25b8aaafaaeb7bdc1d272b9f1733ec17266396e863b48e7789a8'
+  contractId: '0xd697cbe1d0ab95d9c79f847ee7a075db6e5d99196328785ff354fcbda7e28652'
   decimals: 6
   adminPrivateKey:
     source: use-value
-    value: '0xc3c67680a10bc3616fe597c451113d27e6833dcef10c909785b2122585f580ae'
+    value: '0x96aed780a2db20ba5f02925617b0291591e888c61d99f76d9303339eff0683a8'
 
 operator-list:
   - source: use-value

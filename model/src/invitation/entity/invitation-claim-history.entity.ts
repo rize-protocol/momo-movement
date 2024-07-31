@@ -9,7 +9,7 @@ export class InvitationClaimHistory {
   userId: number;
 
   @Column()
-  telegramId: number;
+  telegramId: string;
 
   @Column({ unique: true })
   uniId: string;

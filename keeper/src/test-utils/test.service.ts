@@ -32,16 +32,17 @@ export class TestService {
     }
 
     const tx = await this.coreContractService.createResourceAccountSimple({
-      sender: this.walletService.operator.accountAddress,
+      sender: this.walletService.admin.accountAddress,
       userAccountHash,
     });
 
-    const simulateRes = await this.walletService.simulateTransaction(tx);
+    const simulateRes = await this.walletService.adminSimulateTransaction(tx);
+    console.log(`simulate res: ${JSON.stringify(simulateRes, null, 2)}`);
     if (!simulateRes.success) {
       throw new Error(`[tryCreateResourceAccount] simulate error: ${JSON.stringify(simulateRes, null, 2)}`);
     }
 
-    const committedTxn = await this.walletService.operatorSignAndSubmitTransaction(tx);
+    const committedTxn = await this.walletService.adminSignAndSubmitTransaction(tx);
     await this.walletService.waitForTransaction(committedTxn.hash);
     console.log(`[tryCreateResourceAccount] create resource account hash: ${committedTxn.hash} done`);
   }

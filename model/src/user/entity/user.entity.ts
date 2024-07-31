@@ -6,7 +6,7 @@ export class User {
   id?: number;
 
   @Column({ unique: true })
-  telegramId: number;
+  telegramId: string;
 
   @Column()
   accountHash: string;

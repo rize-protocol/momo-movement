@@ -42,9 +42,7 @@ export class AuthGuard implements CanActivate {
   }
 
   private async validateInitDataAuth(request: any) {
-    this.verifyTelegramInitData(request);
-
-    const telegramId = request.telegramId as number;
+    const telegramId = request.telegramId as string;
     const user = await this.userService.upsertUserByTelegramId(telegramId, this.entityManager);
     if (!user) {
       throw new NotFoundException();
@@ -61,9 +59,9 @@ export class AuthGuard implements CanActivate {
 
     const userInfo = this.authService.getTelegramUid(request) as string;
     const userInfoParsed = JSON.parse(userInfo);
-    const telegramId = parseInt(userInfoParsed?.id ?? 0, 10);
+    const telegramId = userInfoParsed?.id.toString();
 
-    if (!telegramId || telegramId === 0) {
+    if (!telegramId || telegramId.length === 0) {
       throw new UnauthorizedException();
     }
 
