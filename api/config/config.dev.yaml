@@ -29,7 +29,7 @@ core-contract:
   decimals: 6
 
 relayer:
-  commandCreateAccountRedisKey: 'momo-account-command-list'
+  commandAccountRedisKey: 'momo-account-command-list'
   commandTokenRedisKey: 'momo-token-command-list'
 
 game:

@@ -53,7 +53,8 @@ operator-list:
     value: '0xd0a3092eddea783d035463e767fd98163dd2573137a3224b9bfd430849ae36bd'
 
 relayer:
-  commandRedisKey: 'momo-command-list'
+  commandAccountRedisKey: 'momo-account-command-list'
+  commandTokenRedisKey: 'momo-token-command-list'
 
 monitoring:
   metricsNamespace: Movement-gaming
