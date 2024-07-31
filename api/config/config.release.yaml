@@ -15,7 +15,7 @@ redis:
   port: 6379
 
 telegram:
-  botToken: 7313665155:AAFMSop0BG-z7u-VTWDB4AFNaIlyIpEavI0
+  botToken: 6689153710:AAHVDcxHmD1LBZPYvpCbl-2d3kwBSZk6nh4
 
 secret-manager:
   region: us-west-1
