@@ -38,11 +38,11 @@ export class WalletService implements OnModuleInit {
 
     const instanceId = parseInt(process.env.INSTANCE_ID ?? '0', 10);
 
-    if (instanceId >= operatorList.length) {
+    if (instanceId === 0 || instanceId > operatorList.length) {
       throw new Error(`INSTANCE_ID: ${instanceId} >= operator list length: ${operatorList.length}`);
     }
 
-    const operatorInfo = operatorList[instanceId];
+    const operatorInfo = operatorList[instanceId - 1];
     const operatorPrivateKeyStr = await this.secretManagerService.getConfigValue(operatorInfo);
     if (!operatorPrivateKeyStr) {
       throw new Error('operator private key not found');
