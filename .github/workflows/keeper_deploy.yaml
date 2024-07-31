@@ -68,7 +68,7 @@ jobs:
           script: |
             ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}
             ECR_REPOSITORY=momo-movement-keeper
-            IMAGE_TAG=1.0.12
+            IMAGE_TAG=1.0.${{ github.run_number }}
             FIRST_IP=$(echo "${{ env.TARGET_HOST }}" | cut -d' ' -f1)
             INSTANCE_NUM=${{  env.INSTANCE_NUM  }}
             ssh ${{ vars.TARGET_USERNAME }}@$FIRST_IP << EOF
