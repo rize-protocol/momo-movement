@@ -113,16 +113,16 @@ task:
       taskLink: https://twitter.com/RIZE_Fi
       rewardCoins: 300
       rewardPlays: 1
-    - taskId: 2
-      taskName: Join Rize Telegram Announcement
-      taskLink: https://t.me/RIZE_Fi
-      rewardCoins: 300
-      rewardPlays: 1
-    - taskId: 3
-      taskName: Join Rize Telegram Channel
-      taskLink: https://t.me/RIZEFI_Official
-      rewardCoins: 300
-      rewardPlays: 1
+#    - taskId: 2
+#      taskName: Join Rize Telegram Announcement
+#      taskLink: https://t.me/RIZE_Fi
+#      rewardCoins: 300
+#      rewardPlays: 1
+#    - taskId: 3
+#      taskName: Join Rize Telegram Channel
+#      taskLink: https://t.me/RIZEFI_Official
+#      rewardCoins: 300
+#      rewardPlays: 1
     - taskId: 4
       taskName: Check out Rize Galxe
       taskLink: https://app.galxe.com/
