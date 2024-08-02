@@ -15,6 +15,9 @@ export class TaskProgress {
   @Column()
   completed: boolean;
 
+  @Column()
+  status: string;
+
   @UpdateDateColumn()
   updatedAt?: Date;
 

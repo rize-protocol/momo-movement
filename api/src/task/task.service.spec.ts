@@ -10,6 +10,7 @@ import { OverviewModule } from '@/overview/overview.module';
 import { OverviewService } from '@/overview/overview.service';
 import { TaskModule } from '@/task/task.module';
 import { TaskService } from '@/task/task.service';
+import { TaskStatus } from '@/task/types';
 import { TestHelper } from '@/test-utils/helper';
 import { TestModule } from '@/test-utils/test.module';
 import { TestService } from '@/test-utils/test.service';
@@ -70,19 +71,39 @@ describe('taskService test', () => {
 
     let list = await taskService.list(user, testService.entityManager);
     list.forEach((item) => {
-      expect(item.completed).toBeFalsy();
+      expect(item.status === TaskStatus.Initial).toBeTruthy();
     });
 
     let info = await overviewService.info(user, testService.entityManager);
     const initTotalPlay = info.game.total;
 
+    await expect(taskService.rewardTask(user, 1, testService.entityManager)).rejects.toThrow(
+      'please complete task first',
+    );
+
     await taskService.completeTask(user, 1, testService.entityManager);
     list = await taskService.list(user, testService.entityManager);
     list.forEach((item) => {
       if (item.task.taskId === 1) {
-        expect(item.completed).toBeTruthy();
+        expect(item.status === TaskStatus.Completed).toBeTruthy();
       } else {
-        expect(item.completed).toBeFalsy();
+        expect(item.status === TaskStatus.Initial).toBeTruthy();
+      }
+    });
+    info = await overviewService.info(user, testService.entityManager);
+    expect(info.game.total - initTotalPlay).toBe(0);
+
+    await expect(taskService.completeTask(user, 1, testService.entityManager)).rejects.toThrow(
+      'user has completed the task',
+    );
+
+    await taskService.rewardTask(user, 1, testService.entityManager);
+    list = await taskService.list(user, testService.entityManager);
+    list.forEach((item) => {
+      if (item.task.taskId === 1) {
+        expect(item.status === TaskStatus.Rewarded).toBeTruthy();
+      } else {
+        expect(item.status === TaskStatus.Initial).toBeTruthy();
       }
     });
     info = await overviewService.info(user, testService.entityManager);
@@ -90,6 +111,9 @@ describe('taskService test', () => {
 
     await expect(taskService.completeTask(user, 1, testService.entityManager)).rejects.toThrow(
       'user has completed the task',
+    );
+    await expect(taskService.rewardTask(user, 1, testService.entityManager)).rejects.toThrow(
+      'user has claimed task reward',
     );
   });
 });

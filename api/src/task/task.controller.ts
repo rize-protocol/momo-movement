@@ -21,9 +21,16 @@ export class TaskController {
 
   @Post('complete')
   async complete(@CurrentUser() user: User, @Body() request: CompleteTaskRequest) {
+    await this.entityManager.transaction(async (entityManager) => {
+      await this.taskService.completeTask(user, request.taskId, entityManager);
+    });
+  }
+
+  @Post('reward')
+  async reward(@CurrentUser() user: User, @Body() request: CompleteTaskRequest) {
     let uniId = '';
     await this.entityManager.transaction(async (entityManager) => {
-      uniId = await this.taskService.completeTask(user, request.taskId, entityManager);
+      uniId = await this.taskService.rewardTask(user, request.taskId, entityManager);
     });
     return { uniId };
   }
