@@ -59,4 +59,4 @@ relayer:
 monitoring:
   metricsNamespace: Movement-gaming
   region: us-west-1
-  env: dev
+  env: release
