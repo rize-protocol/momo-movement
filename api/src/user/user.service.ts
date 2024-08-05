@@ -1,9 +1,14 @@
+import { StandardUnit } from '@aws-sdk/client-cloudwatch';
+import { MetricDatum } from '@aws-sdk/client-cloudwatch/dist-types/models/models_0';
 import { Injectable } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { InjectEntityManager } from '@nestjs/typeorm';
 import { SHA224 } from 'crypto-js';
 import { User } from 'movement-gaming-model';
-import { EntityManager } from 'typeorm';
+import { EntityManager, Not } from 'typeorm';
 
 import { CommandService } from '@/command/command.service';
+import { MetricsService } from '@/common/services/metrics.service';
 import { RedisService } from '@/common/services/redis.service';
 import { checkBadRequest } from '@/common/utils/check';
 import { CoreContractService } from '@/core-contract/core-contract.service';
@@ -15,12 +20,30 @@ export class UserService {
   private readonly redisLockTime = 10000; // 10s
 
   constructor(
+    @InjectEntityManager() private readonly entityManager: EntityManager,
     private readonly invitationService: InvitationService,
     private readonly gameService: GameService,
     private readonly coreContractService: CoreContractService,
     private readonly commandService: CommandService,
     private readonly redisService: RedisService,
+    private readonly metricsService: MetricsService,
   ) {}
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async userMonitoring() {
+    const totalUser = await this.entityManager.count(User);
+    const totalUserWithResourceAddress = await this.entityManager.countBy(User, { resourceAddress: Not('') });
+
+    const metrics: MetricDatum[] = [
+      this.metricsService.createMetricData('totalUser', totalUser, StandardUnit.None),
+      this.metricsService.createMetricData(
+        'totalUserWithResourceAddress',
+        totalUserWithResourceAddress,
+        StandardUnit.None,
+      ),
+    ];
+    await this.metricsService.putMetrics(metrics);
+  }
 
   async upsertUserByTelegramId(telegramId: string, entityManager: EntityManager) {
     const user = await this.tryGetUserByTelegramId(telegramId, entityManager);
