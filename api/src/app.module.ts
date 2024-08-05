@@ -10,6 +10,7 @@ import { InvitationModule } from '@/invitation/invitation.module';
 import { MomoModule } from '@/momo/momo.module';
 import { OverviewModule } from '@/overview/overview.module';
 import { TaskModule } from '@/task/task.module';
+import { TelegramModule } from '@/telegram/telegram.module';
 import { UserModule } from '@/user/user.module';
 import { Web3Module } from '@/web3/web3.module';
 
@@ -30,6 +31,7 @@ import { AppService } from './app.service';
     InvitationModule,
     MomoModule,
     TaskModule,
+    TelegramModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,3 +1,4 @@
+import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -32,8 +33,9 @@ export class SecretManagerModule {}
       }),
     }),
     TypeOrmModule.forFeature(Object.values(Entities)),
+    HttpModule,
   ],
   providers: [ConfigService, SecretManagerService, TimeService, RedisService, MetricsService],
-  exports: [ConfigService, SecretManagerService, TimeService, RedisService, MetricsService],
+  exports: [ConfigService, SecretManagerService, TimeService, RedisService, MetricsService, HttpModule],
 })
 export class CommonModule {}
