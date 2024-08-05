@@ -9,7 +9,7 @@ export class InvitationRelation {
   @Column()
   inviterId: number;
 
-  @Column()
+  @Column({ unique: true })
   inviteeId: number;
 
   @UpdateDateColumn()

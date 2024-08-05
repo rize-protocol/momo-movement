@@ -1,10 +1,13 @@
 import { Aptos, InputGenerateTransactionPayloadData, TransactionWorkerEventsEnum } from '@aptos-labs/ts-sdk';
+import { StandardUnit } from '@aws-sdk/client-cloudwatch';
+import { MetricDatum } from '@aws-sdk/client-cloudwatch/dist-types/models/models_0';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import BigNumber from 'bignumber.js';
 
 import { RelayerConfig } from '@/common/config/types';
+import { MetricsService } from '@/common/services/metrics.service';
 import { RedisService } from '@/common/services/redis.service';
 import { TimeService } from '@/common/services/time.service';
 import { CoreContractService } from '@/core-contract/core-contract.service';
@@ -30,6 +33,7 @@ export class RelayerService {
     private readonly redisService: RedisService,
     private readonly aptos: Aptos,
     private readonly timeService: TimeService,
+    private readonly metricsService: MetricsService,
   ) {
     const relayerConfig = this.configService.get<RelayerConfig>('relayer');
     if (!relayerConfig) {
@@ -97,7 +101,17 @@ export class RelayerService {
       userAccountHash: command.userAccountHash,
     });
     const committedTxn = await this.walletService.adminSignAndSubmitTransaction(tx);
-    await this.walletService.waitForTransaction(committedTxn.hash);
+    const executedTxn = await this.walletService.waitForTransaction(committedTxn.hash);
+
+    await this.metricsService.putMetrics([
+      this.metricsService.createMetricData('totalTransactions', 1, StandardUnit.Count, [
+        {
+          Name: 'success',
+          Value: executedTxn.success.toString(),
+        },
+      ]),
+    ]);
+
     this.logger.log(`[handleRelayAccount] create resource account hash: ${committedTxn.hash} done`);
   }
 
@@ -137,6 +151,28 @@ export class RelayerService {
     while (executing) {
       await this.timeService.sleep(500);
     }
+
+    const metrics: MetricDatum[] = [
+      this.metricsService.createMetricData('totalTransactions', success, StandardUnit.Count, [
+        {
+          Name: 'success',
+          Value: 'true',
+        },
+      ]),
+    ];
+    const failedTxCount = txs.length - success;
+    if (failedTxCount > 0) {
+      metrics.push(
+        this.metricsService.createMetricData('totalTransactions', failedTxCount, StandardUnit.Count, [
+          {
+            Name: 'success',
+            Value: 'false',
+          },
+        ]),
+      );
+    }
+    await this.metricsService.putMetrics(metrics);
+
     this.logger.log(`[handleRelayToken] done`);
   }
 

@@ -132,4 +132,4 @@ task:
 monitoring:
   metricsNamespace: Movement-gaming
   region: us-west-1
-  env: local
+  env: dev
