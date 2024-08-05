@@ -1,10 +1,15 @@
+import { StandardUnit } from '@aws-sdk/client-cloudwatch';
+import { MetricDatum } from '@aws-sdk/client-cloudwatch/dist-types/models/models_0';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { InjectEntityManager } from '@nestjs/typeorm';
 import { TaskProgress, User } from 'movement-gaming-model';
 import { nanoid } from 'nanoid';
 import { EntityManager } from 'typeorm';
 
 import { TaskConfig, TaskItemConfig } from '@/common/config/types';
+import { MetricsService } from '@/common/services/metrics.service';
 import { RedisService } from '@/common/services/redis.service';
 import { checkBadRequest } from '@/common/utils/check';
 import { GameService } from '@/game/game.service';
@@ -18,10 +23,12 @@ export class TaskService {
   private readonly redisLockTime = 10000; // 10s
 
   constructor(
+    @InjectEntityManager() private readonly entityManager: EntityManager,
     private readonly configService: ConfigService,
     private readonly gameService: GameService,
     private readonly momoService: MomoService,
     private readonly redisService: RedisService,
+    private readonly metricsService: MetricsService,
   ) {
     const taskConfig = this.configService.get<TaskConfig>('task');
     if (!taskConfig) {
@@ -29,6 +36,18 @@ export class TaskService {
     }
 
     this.taskList = taskConfig.list;
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async taskMonitoring() {
+    const totalTaskCompleted = await this.entityManager.countBy(TaskProgress, { status: TaskStatus.Completed });
+    const totalTaskRewarded = await this.entityManager.countBy(TaskProgress, { status: TaskStatus.Rewarded });
+
+    const metrics: MetricDatum[] = [
+      this.metricsService.createMetricData('totalTaskCompleted', totalTaskCompleted, StandardUnit.None),
+      this.metricsService.createMetricData('totalTaskRewarded', totalTaskRewarded, StandardUnit.None),
+    ];
+    await this.metricsService.putMetrics(metrics);
   }
 
   async list(user: User, entityManager: EntityManager) {
