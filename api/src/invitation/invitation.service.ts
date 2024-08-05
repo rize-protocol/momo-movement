@@ -1,10 +1,15 @@
+import { StandardUnit } from '@aws-sdk/client-cloudwatch';
+import { MetricDatum } from '@aws-sdk/client-cloudwatch/dist-types/models/models_0';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { InjectEntityManager } from '@nestjs/typeorm';
 import { Invitation, InvitationClaimHistory, InvitationCode, InvitationRelation, User } from 'movement-gaming-model';
 import { nanoid } from 'nanoid';
 import { EntityManager } from 'typeorm';
 
 import { InvitationConfig, InvitationTargetConfig } from '@/common/config/types';
+import { MetricsService } from '@/common/services/metrics.service';
 import { RedisService } from '@/common/services/redis.service';
 import { checkBadRequest } from '@/common/utils/check';
 import { GameService } from '@/game/game.service';
@@ -20,10 +25,12 @@ export class InvitationService {
   private readonly redisLockTime = 10000; // 10s
 
   constructor(
+    @InjectEntityManager() private readonly entityManager: EntityManager,
     private readonly configService: ConfigService,
     private readonly momoService: MomoService,
     private readonly gameService: GameService,
     private readonly redisService: RedisService,
+    private readonly metricsService: MetricsService,
   ) {
     const invitationConfig = this.configService.get<InvitationConfig>('invitation');
     if (!invitationConfig) {
@@ -32,6 +39,26 @@ export class InvitationService {
 
     this.invitationConfig = invitationConfig;
     this.invitationTarget = invitationConfig.target;
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async invitationMonitoring() {
+    const totalInvitee = await this.entityManager.count(InvitationRelation);
+    const totalInviterList = await this.entityManager
+      .createQueryBuilder()
+      .from('invitation_relation', 'invitation_relation')
+      .select('invitation_relation.inviterId', 'inviterId')
+      .addSelect('COUNT(invitation_relation.inviterId)', 'count')
+      .groupBy('inviterId')
+      .having('count >= :count', { count: 20 })
+      .getRawMany();
+    const totalInviter = totalInviterList.length;
+
+    const metrics: MetricDatum[] = [
+      this.metricsService.createMetricData('totalInvitee', totalInvitee, StandardUnit.None),
+      this.metricsService.createMetricData('totalInviter', totalInviter, StandardUnit.None),
+    ];
+    await this.metricsService.putMetrics(metrics);
   }
 
   async getUserInvitationInfo(user: User, entityManager: EntityManager): Promise<UserInvitationInfo> {

@@ -1,10 +1,14 @@
+import { StandardUnit } from '@aws-sdk/client-cloudwatch';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { InjectEntityManager } from '@nestjs/typeorm';
 import { GamePlay, GamePlayHistory, User } from 'movement-gaming-model';
 import { nanoid } from 'nanoid';
 import { EntityManager } from 'typeorm';
 
 import { GameConfig } from '@/common/config/types';
+import { MetricsService } from '@/common/services/metrics.service';
 import { RedisService } from '@/common/services/redis.service';
 import { TimeService } from '@/common/services/time.service';
 import { checkBadRequest } from '@/common/utils/check';
@@ -24,10 +28,12 @@ export class GameService {
   private readonly timesPerGame: number;
 
   constructor(
+    @InjectEntityManager() private readonly entityManager: EntityManager,
     private readonly configService: ConfigService,
     private readonly redisService: RedisService,
     private readonly timeService: TimeService,
     private readonly momoService: MomoService,
+    private readonly metricsService: MetricsService,
   ) {
     const gameConfig = this.configService.get<GameConfig>('game');
     if (!gameConfig) {
@@ -38,6 +44,14 @@ export class GameService {
     this.replenishmentInterval = gameConfig.replenishmentInterval;
     this.coinsPerGame = gameConfig.coinsPerGame;
     this.timesPerGame = gameConfig.timesPerGame;
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async gameMonitoring() {
+    const totalGamePlay = await this.entityManager.count(GamePlayHistory);
+    await this.metricsService.putMetrics([
+      this.metricsService.createMetricData('totalGamePlay', totalGamePlay, StandardUnit.None),
+    ]);
   }
 
   async getPlayInfo(user: User, entityManager: EntityManager): Promise<GamePlayInfo> {
