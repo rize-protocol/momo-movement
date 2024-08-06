@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { SHA224 } from 'crypto-js';
 import { User } from 'movement-gaming-model';
 import { EntityManager } from 'typeorm';
@@ -13,6 +13,8 @@ import { InvitationService } from '@/invitation/invitation.service';
 @Injectable()
 export class UserService {
   private readonly redisLockTime = 10000; // 10s
+
+  private readonly logger = new Logger(User.name);
 
   constructor(
     private readonly invitationService: InvitationService,
@@ -60,9 +62,17 @@ export class UserService {
   }
 
   async createUser(telegramId: string, referralCode: string, entityManager: EntityManager) {
+    const accountHash = this.generateUserAccountHash(telegramId);
+    const existResourceAccount = await this.coreContractService.tryGetUserResourceAccount(accountHash);
+    if (existResourceAccount) {
+      this.logger.log(
+        `[createUser] user exist, telegramId: ${telegramId}, accountHash: ${accountHash}, referralCode: ${referralCode}`,
+      );
+      return;
+    }
+
     const redisLock = await this.redisService.acquireLock(`momo-create-user-${telegramId}`, this.redisLockTime);
     try {
-      const accountHash = this.generateUserAccountHash(telegramId);
       await this.commandService.addCreateResourceAccount(accountHash);
 
       const exit = await entityManager.findOneBy(User, { telegramId });
