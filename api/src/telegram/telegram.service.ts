@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { EntityManager } from 'typeorm';
 
 import { InvitationConfig, TelegramConfig } from '@/common/config/types';
 import { TelegramUpdate } from '@/telegram/types';
+import { UserService } from '@/user/user.service';
 
 @Injectable()
 export class TelegramService {
@@ -10,7 +12,10 @@ export class TelegramService {
 
   private readonly telegramBotToken: string;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly userService: UserService,
+  ) {
     const telegramConfig = this.configService.get<TelegramConfig>('telegram');
     if (!telegramConfig) {
       throw new Error('telegram config not found');
@@ -25,27 +30,34 @@ export class TelegramService {
     this.invitationConfig = invitationConfig;
   }
 
-  async handleUpdate(update: TelegramUpdate) {
+  async handleUpdate(entityManager: EntityManager, update: TelegramUpdate) {
     if (update.message?.text?.startsWith('/start')) {
-      await this.handleStart(update);
+      await this.handleStart(entityManager, update);
     }
   }
 
-  async handleStart(update: TelegramUpdate) {
+  async handleStart(entityManager: EntityManager, update: TelegramUpdate) {
     const text = update.message?.text;
     if (!text) {
       return;
     }
+
+    let referralCode = '';
     const startList = text.split(' ');
-    if (startList.length !== 2) {
-      return;
-    }
-    const referralCode = startList[1];
-
-    if (referralCode.length !== this.invitationConfig.codeLen) {
-      return;
+    if (startList.length === 2) {
+      [, referralCode] = startList;
     }
 
-    console.log(`referralCode: ${referralCode}`);
+    if (referralCode.length > 0 && referralCode.length !== this.invitationConfig.codeLen) {
+      return;
+    }
+
+    const telegramIdInt = update.message?.from?.id;
+    if (!telegramIdInt) {
+      return;
+    }
+    const telegramId = telegramIdInt.toString();
+
+    await this.userService.createUser(telegramId, referralCode, entityManager);
   }
 }
