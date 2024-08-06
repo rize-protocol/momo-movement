@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import BigNumber from 'bignumber.js';
 
 import { CoreContractConfig } from '@/common/config/types';
+import { RedisService } from '@/common/services/redis.service';
 
 @Injectable()
 export class CoreContractService {
@@ -11,8 +12,11 @@ export class CoreContractService {
 
   private readonly decimals: number;
 
+  private readonly resourceAccountHashPrefix = 'momo-rs-hash-';
+
   constructor(
     private readonly configService: ConfigService,
+    private readonly redisService: RedisService,
     private readonly aptos: Aptos,
   ) {
     const coreContractConfig = this.configService.get<CoreContractConfig>('core-contract');
@@ -25,15 +29,23 @@ export class CoreContractService {
   }
 
   async tryGetUserResourceAccount(userAccountHash: string) {
+    const redisKey = `${this.resourceAccountHashPrefix}${userAccountHash}`;
+    const cachedResourceAccount = await this.redisService.get(redisKey);
+    if (cachedResourceAccount) {
+      return cachedResourceAccount;
+    }
+
     try {
-      const [resourceAccount] = await this.aptos.view({
+      const [viewRes] = await this.aptos.view({
         payload: {
           function: `${this.contractId}::momo::try_get_user_resource_account`,
           functionArguments: [userAccountHash],
         },
       });
 
-      return resourceAccount as string;
+      const resourceAccount = viewRes as string;
+      await this.redisService.setnx(redisKey, resourceAccount);
+      return resourceAccount;
     } catch (e) {
       return undefined;
     }

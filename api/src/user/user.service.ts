@@ -1,6 +1,6 @@
 import { StandardUnit } from '@aws-sdk/client-cloudwatch';
 import { MetricDatum } from '@aws-sdk/client-cloudwatch/dist-types/models/models_0';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { SHA224 } from 'crypto-js';
@@ -16,8 +16,12 @@ import { GameService } from '@/game/game.service';
 import { InvitationService } from '@/invitation/invitation.service';
 
 @Injectable()
-export class UserService {
+export class UserService implements OnModuleInit {
+  private totalUser: number;
+
   private readonly redisLockTime = 10000; // 10s
+
+  private readonly logger = new Logger(User.name);
 
   constructor(
     @InjectEntityManager() private readonly entityManager: EntityManager,
@@ -29,13 +33,17 @@ export class UserService {
     private readonly metricsService: MetricsService,
   ) {}
 
+  async onModuleInit() {
+    await this.userMonitoring();
+  }
+
   @Cron(CronExpression.EVERY_MINUTE)
   async userMonitoring() {
-    const totalUser = await this.entityManager.count(User);
+    this.totalUser = await this.entityManager.count(User);
     const totalUserWithResourceAddress = await this.entityManager.countBy(User, { resourceAddress: Not('') });
 
     const metrics: MetricDatum[] = [
-      this.metricsService.createMetricData('totalUser', totalUser, StandardUnit.None),
+      this.metricsService.createMetricData('totalUser', this.totalUser, StandardUnit.None),
       this.metricsService.createMetricData(
         'totalUserWithResourceAddress',
         totalUserWithResourceAddress,
@@ -43,6 +51,10 @@ export class UserService {
       ),
     ];
     await this.metricsService.putMetrics(metrics);
+  }
+
+  async getTotalUser() {
+    return this.totalUser ?? 0;
   }
 
   async upsertUserByTelegramId(telegramId: string, entityManager: EntityManager) {
@@ -83,9 +95,17 @@ export class UserService {
   }
 
   async createUser(telegramId: string, referralCode: string, entityManager: EntityManager) {
+    const accountHash = this.generateUserAccountHash(telegramId);
+    const existResourceAccount = await this.coreContractService.tryGetUserResourceAccount(accountHash);
+    if (existResourceAccount) {
+      this.logger.log(
+        `[createUser] user exist, telegramId: ${telegramId}, accountHash: ${accountHash}, referralCode: ${referralCode}`,
+      );
+      return;
+    }
+
     const redisLock = await this.redisService.acquireLock(`momo-create-user-${telegramId}`, this.redisLockTime);
     try {
-      const accountHash = this.generateUserAccountHash(telegramId);
       await this.commandService.addCreateResourceAccount(accountHash);
 
       const exit = await entityManager.findOneBy(User, { telegramId });

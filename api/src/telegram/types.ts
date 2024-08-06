@@ -5,7 +5,7 @@ export interface TelegramUpdate {
 
 export interface TelegramMessage {
   message_id: number;
-  from: TelegramUser;
+  from?: TelegramUser;
   chat: TelegramChat;
   date: number;
   text?: string;
