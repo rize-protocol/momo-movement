@@ -16,7 +16,8 @@ export class TelegramController {
   @Public()
   @Post('webhook')
   async webhook(@Body() body: TelegramUpdate) {
-    console.log(JSON.stringify(body, null, 2));
-    await this.telegramService.handleUpdate(this.entityManager, body);
+    await this.entityManager.transaction(async (entityManager) => {
+      await this.telegramService.handleUpdate(entityManager, body);
+    });
   }
 }
