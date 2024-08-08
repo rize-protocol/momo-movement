@@ -133,3 +133,11 @@ monitoring:
   metricsNamespace: Movement-gaming
   region: us-west-1
   env: release
+
+campaign:
+  referralCoins: 100
+
+admin:
+  authToken:
+    source: secret-manager
+    value: movement-gaming-admin-auth-token-release

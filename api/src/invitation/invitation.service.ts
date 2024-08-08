@@ -152,6 +152,13 @@ export class InvitationService {
     };
   }
 
+  async isValidInvitationCode(code: string, entityManager: EntityManager) {
+    if (!!code && code.length === this.invitationConfig.codeLen) {
+      return entityManager.existsBy(InvitationCode, { code });
+    }
+    return false;
+  }
+
   async initInvitation(user: User, entityManager: EntityManager) {
     // init invitation info
     const invitationInfo: Invitation = {

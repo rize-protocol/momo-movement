@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { AuthModule } from '@/auth/auth.module';
+import { CampaignModule } from '@/campaign/campaign.module';
 import { CommandModule } from '@/command/command.module';
 import { CommonModule } from '@/common/common.module';
 import { CoreContractModule } from '@/core-contract/core-contract.module';
@@ -32,6 +33,7 @@ import { AppService } from './app.service';
     MomoModule,
     TaskModule,
     TelegramModule,
+    CampaignModule,
   ],
   controllers: [AppController],
   providers: [AppService],

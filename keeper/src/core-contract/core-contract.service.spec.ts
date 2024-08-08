@@ -74,7 +74,7 @@ describe('coreContractService test', () => {
   });
 
   it('mint token', async () => {
-    const userAccountHash = 'hash_test1';
+    const userAccountHash = '0x573f6fbb07444f87bf38152319b49fb7b0d782dbada7b1c0c26b2c63b72ec954';
     await testService.tryCreateResourceAccount(userAccountHash);
 
     const resourceAccount = await coreContractService.tryGetUserResourceAccount(userAccountHash);

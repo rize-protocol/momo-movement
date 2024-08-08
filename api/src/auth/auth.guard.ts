@@ -4,7 +4,7 @@ import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
 
 import { AuthService } from '@/auth/auth.service';
-import { IS_PUBLIC_KEY, IS_REGISTRATION_KEY } from '@/common/decorators/auth.decorator';
+import { IS_ADMIN_KEY, IS_PUBLIC_KEY, IS_REGISTRATION_KEY } from '@/common/decorators/auth.decorator';
 import { UserService } from '@/user/user.service';
 
 @Injectable()
@@ -22,6 +22,11 @@ export class AuthGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest();
+
+    if (this.isAdmin(context)) {
+      return this.authService.isAdmin(request);
+    }
+
     this.verifyTelegramInitData(request);
 
     if (this.isRegistration(context)) {
@@ -39,6 +44,10 @@ export class AuthGuard implements CanActivate {
 
   private isRegistration(ctx: ExecutionContext) {
     return this.reflector.getAllAndOverride<boolean>(IS_REGISTRATION_KEY, [ctx.getHandler(), ctx.getClass]);
+  }
+
+  private isAdmin(ctx: ExecutionContext) {
+    return this.reflector.getAllAndOverride<boolean>(IS_ADMIN_KEY, [ctx.getHandler(), ctx.getClass]);
   }
 
   private async validateInitDataAuth(request: any) {
