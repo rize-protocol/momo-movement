@@ -48,22 +48,26 @@ export class TelegramService {
         'Playing creates transactions that help to farm the Movement Labs airdrop.\n\n' +
         'Click PLAY to start!!!';
 
-      await this.httpService.axiosRef.post(this.telegramSendPhotoApiUrl, {
-        chat_id: chatId,
-        photo: 'AgACAgQAAxkDAAPwZrRiiMYvJPqIigQYjG6FCATBk6MAApi0MRtABKVRaqL59-3Kn0EBAAMCAAN3AAM1BA',
-        caption: text,
-        parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: '🎮 Play for Airdrop', url: `https://t.me/MomoByRizeBot/momo?startapp=${referralCode}` }],
-            [{ text: 'Announcement', url: 'https://t.me/RIZE_Fi' }],
-            [
-              { text: 'Community', url: 'https://t.me/RIZEFI_OFFICIAL' },
-              { text: 'Twitter', url: 'https://x.com/RIZE_Fi' },
+      try {
+        await this.httpService.axiosRef.post(this.telegramSendPhotoApiUrl, {
+          chat_id: chatId,
+          photo: 'AgACAgQAAxkDAAJuMGa0d1HBuMFTFyQpY3Mhe4ttqJsAA5i0MRtABKVRuodYuOoPZm8BAAMCAAN3AAM1BA',
+          caption: text,
+          parse_mode: 'Markdown',
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: '🎮 Play for Airdrop', url: `https://t.me/MomoByRizeBot/momo?startapp=${referralCode}` }],
+              [{ text: 'Announcement', url: 'https://t.me/RIZE_Fi' }],
+              [
+                { text: 'Community', url: 'https://t.me/RIZEFI_OFFICIAL' },
+                { text: 'Twitter', url: 'https://x.com/RIZE_Fi' },
+              ],
             ],
-          ],
-        },
-      });
+          },
+        });
+      } catch (e) {
+        this.logger.log(`[handleUpdate] post error: ${e}`);
+      }
 
       await this.handleCreateResourceAccount(entityManager, referralCode, update);
     }
