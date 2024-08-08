@@ -87,6 +87,7 @@ export class RelayerService {
       // this.logger.log('[handleRelayAccount] do not have new transactions, return');
       return;
     }
+    this.logger.log(`[handleRelayAccount] command: ${commandStr}`);
     const command = JSON.parse(commandStr) as Command;
 
     if (command.type !== 'create_resource_account' && command.type !== 'create_resource_account_and_mint_token') {
