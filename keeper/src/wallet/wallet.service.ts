@@ -36,7 +36,7 @@ export class WalletService implements OnModuleInit {
       throw new Error('operator-list config not found');
     }
 
-    const instanceId = parseInt(process.env.INSTANCE_ID ?? '0', 10);
+    const instanceId = parseInt(process.env.INSTANCE_ID ?? '1', 10);
 
     if (instanceId === 0 || instanceId > operatorList.length) {
       throw new Error(`INSTANCE_ID: ${instanceId} >= operator list length: ${operatorList.length}`);
@@ -69,6 +69,14 @@ export class WalletService implements OnModuleInit {
   async adminSimulateTransaction(transaction: AnyRawTransaction) {
     const [userTransactionResponse] = await this.aptos.transaction.simulate.simple({
       signerPublicKey: this.adminAccount.publicKey,
+      transaction,
+    });
+    return userTransactionResponse;
+  }
+
+  async operatorSimulateTransaction(transaction: AnyRawTransaction) {
+    const [userTransactionResponse] = await this.aptos.transaction.simulate.simple({
+      signerPublicKey: this.operatorAccount.publicKey,
       transaction,
     });
     return userTransactionResponse;

@@ -1,4 +1,9 @@
-import { Aptos, InputGenerateTransactionPayloadData, TransactionWorkerEventsEnum } from '@aptos-labs/ts-sdk';
+import {
+  Aptos,
+  CommittedTransactionResponse,
+  InputGenerateTransactionPayloadData,
+  TransactionWorkerEventsEnum,
+} from '@aptos-labs/ts-sdk';
 import { StandardUnit } from '@aws-sdk/client-cloudwatch';
 import { MetricDatum } from '@aws-sdk/client-cloudwatch/dist-types/models/models_0';
 import { Injectable, Logger } from '@nestjs/common';
@@ -84,7 +89,7 @@ export class RelayerService {
     }
     const command = JSON.parse(commandStr) as Command;
 
-    if (command.type !== 'create_resource_account') {
+    if (command.type !== 'create_resource_account' && command.type !== 'create_resource_account_and_mint_token') {
       throw new Error(`[handleRelayAccount] invalid command: ${commandStr}`);
     }
 
@@ -96,12 +101,24 @@ export class RelayerService {
       return;
     }
 
-    const tx = await this.coreContractService.createResourceAccountSimple({
-      sender: this.walletService.admin.accountAddress,
-      userAccountHash: command.userAccountHash,
-    });
-    const committedTxn = await this.walletService.adminSignAndSubmitTransaction(tx);
-    const executedTxn = await this.walletService.waitForTransaction(committedTxn.hash);
+    let executedTxn: CommittedTransactionResponse;
+    if (command.type === 'create_resource_account') {
+      const tx = await this.coreContractService.createResourceAccountSimple({
+        sender: this.walletService.admin.accountAddress,
+        userAccountHash: command.userAccountHash,
+      });
+      const committedTxn = await this.walletService.adminSignAndSubmitTransaction(tx);
+      executedTxn = await this.walletService.waitForTransaction(committedTxn.hash);
+    } else {
+      const tx = await this.coreContractService.createResourceAccountAndMintTokenSimple({
+        sender: this.walletService.admin.accountAddress,
+        userAccountHash: command.userAccountHash,
+        uniId: command.uniId,
+        amount: new BigNumber(command.amount),
+      });
+      const committedTxn = await this.walletService.adminSignAndSubmitTransaction(tx);
+      executedTxn = await this.walletService.waitForTransaction(committedTxn.hash);
+    }
 
     await this.metricsService.putMetrics([
       this.metricsService.createMetricData('totalTransactions', 1, StandardUnit.Count, [
@@ -112,7 +129,7 @@ export class RelayerService {
       ]),
     ]);
 
-    this.logger.log(`[handleRelayAccount] create resource account hash: ${committedTxn.hash} done`);
+    this.logger.log(`[handleRelayAccount] create resource account hash: ${executedTxn.hash} done`);
   }
 
   private async handleRelayToken() {

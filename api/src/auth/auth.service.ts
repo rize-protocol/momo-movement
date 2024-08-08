@@ -1,21 +1,39 @@
 import { createHmac } from 'crypto';
 
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, OnModuleInit, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 
-import { TelegramConfig } from '@/common/config/types';
+import { AdminConfig, TelegramConfig } from '@/common/config/types';
+import { SecretManagerService } from '@/common/services/secret-manager.service';
 
 @Injectable()
-export class AuthService {
-  private readonly telegramBotToken: string;
+export class AuthService implements OnModuleInit {
+  private telegramBotToken: string;
 
-  constructor(private readonly configService: ConfigService) {
+  private adminAuthToken: string;
+
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly secretManagerService: SecretManagerService,
+  ) {}
+
+  async onModuleInit() {
     const telegramConfig = this.configService.get<TelegramConfig>('telegram');
     if (!telegramConfig) {
       throw new Error('telegram config not found');
     }
     this.telegramBotToken = telegramConfig.botToken;
+
+    const authConfig = this.configService.get<AdminConfig>('admin');
+    if (!authConfig) {
+      throw new Error('admin config not found');
+    }
+    const authToken = await this.secretManagerService.getConfigValue(authConfig.authToken);
+    if (!authToken) {
+      throw new Error('invalid admin auto token');
+    }
+    this.adminAuthToken = authToken;
   }
 
   verifyTelegramInitData(request: Request) {
@@ -36,6 +54,11 @@ export class AuthService {
 
     const urlParams = new URLSearchParams(decodedInitData);
     return urlParams.get('user');
+  }
+
+  isAdmin(request: Request) {
+    const adminAuthToken = request.headers['admin-auth-token'] as string;
+    return adminAuthToken === this.adminAuthToken;
   }
 
   private mustGetHashAndDataCheckString(decodedInitData: string) {

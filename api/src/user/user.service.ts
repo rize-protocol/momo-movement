@@ -5,8 +5,10 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { SHA224 } from 'crypto-js';
 import { User } from 'movement-gaming-model';
+import { nanoid } from 'nanoid';
 import { EntityManager, Not } from 'typeorm';
 
+import { CampaignService } from '@/campaign/campaign.service';
 import { CommandService } from '@/command/command.service';
 import { MetricsService } from '@/common/services/metrics.service';
 import { RedisService } from '@/common/services/redis.service';
@@ -29,6 +31,7 @@ export class UserService implements OnModuleInit {
     private readonly gameService: GameService,
     private readonly coreContractService: CoreContractService,
     private readonly commandService: CommandService,
+    private readonly campaignService: CampaignService,
     private readonly redisService: RedisService,
     private readonly metricsService: MetricsService,
   ) {}
@@ -94,6 +97,10 @@ export class UserService implements OnModuleInit {
     return entityManager.findOneBy(User, { telegramId });
   }
 
+  async createUserInternal(telegramId: string, referralCode: string, entityManager: EntityManager) {
+    return this.createUser(telegramId, referralCode, entityManager);
+  }
+
   async createUser(telegramId: string, referralCode: string, entityManager: EntityManager) {
     const accountHash = this.generateUserAccountHash(telegramId);
     const existResourceAccount = await this.coreContractService.tryGetUserResourceAccount(accountHash);
@@ -103,10 +110,21 @@ export class UserService implements OnModuleInit {
       );
       return;
     }
+    const isReferralCampaignCode =
+      referralCode.length > 0 ? await this.campaignService.isReferralCampaignCode(referralCode, entityManager) : false;
 
     const redisLock = await this.redisService.acquireLock(`momo-create-user-${telegramId}`, this.redisLockTime);
     try {
-      await this.commandService.addCreateResourceAccount(accountHash);
+      if (isReferralCampaignCode) {
+        const uniId = nanoid();
+        await this.commandService.addCreateResourceAccountAndMintToken(
+          accountHash,
+          uniId,
+          this.campaignService.getReferralCoinAmount().toString(),
+        );
+      } else {
+        await this.commandService.addCreateResourceAccount(accountHash);
+      }
 
       const exit = await entityManager.findOneBy(User, { telegramId });
       if (exit) {

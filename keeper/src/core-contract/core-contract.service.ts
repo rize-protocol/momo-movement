@@ -111,7 +111,24 @@ export class CoreContractService {
     });
   }
 
-  async mintTokenSimple(input: { sender: string; receipt: string; uniId: string; amount: BigNumber }) {
+  async createResourceAccountAndMintTokenSimple(input: {
+    sender: AccountAddressInput;
+    userAccountHash: string;
+    uniId: string;
+    amount: BigNumber;
+  }) {
+    const { sender, userAccountHash, uniId, amount } = input;
+    const amountInWei = amount.times(10 ** this.decimals).toFixed();
+    return this.aptos.transaction.build.simple({
+      sender,
+      data: {
+        function: `${this.contractId}::momo::create_resource_account_and_mint_token`,
+        functionArguments: [userAccountHash, uniId, amountInWei],
+      },
+    });
+  }
+
+  async mintTokenSimple(input: { sender: AccountAddressInput; receipt: string; uniId: string; amount: BigNumber }) {
     const { sender, receipt, uniId, amount } = input;
     const amountInWei = amount.times(10 ** this.decimals).toFixed();
     return this.aptos.transaction.build.simple({

@@ -28,6 +28,11 @@ export class CommandService {
     return this.pushCommand(command);
   }
 
+  async addCreateResourceAccountAndMintToken(userAccountHash: string, uniId: string, amount: string) {
+    const command: Command = { type: 'create_resource_account_and_mint_token', userAccountHash, uniId, amount };
+    return this.pushCommand(command);
+  }
+
   async addMintToken(receipt: string, uniId: string, amount: string) {
     const command: Command = { type: 'mint_token', receipt, uniId, amount };
     return this.pushCommand(command);
@@ -49,7 +54,7 @@ export class CommandService {
   }
 
   private async pushCommand(command: Command) {
-    if (command.type === 'create_resource_account') {
+    if (command.type === 'create_resource_account' || command.type === 'create_resource_account_and_mint_token') {
       this.redisService.rpush(this.commandAccountRedisKey, JSON.stringify(command));
     } else {
       this.redisService.rpush(this.commandTokenRedisKey, JSON.stringify(command));
