@@ -35,6 +35,7 @@ export class OverviewService {
   }
 
   async infoInternal(telegramId: string, entityManager: EntityManager) {
+    await this.userService.upsertUserByTelegramId(telegramId, entityManager);
     const user = await this.userService.mustGetUserByTelegramId(telegramId, entityManager);
     return this.info(user, entityManager);
   }
