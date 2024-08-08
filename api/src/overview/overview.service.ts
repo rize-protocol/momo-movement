@@ -6,10 +6,12 @@ import { CoreContractService } from '@/core-contract/core-contract.service';
 import { GameService } from '@/game/game.service';
 import { InvitationService } from '@/invitation/invitation.service';
 import { OverviewInfoResponse } from '@/overview/dto/overview-info.response';
+import { UserService } from '@/user/user.service';
 
 @Injectable()
 export class OverviewService {
   constructor(
+    private readonly userService: UserService,
     private readonly gameService: GameService,
     private readonly invitationService: InvitationService,
     private readonly coreContractService: CoreContractService,
@@ -30,5 +32,11 @@ export class OverviewService {
       invitation: invitationInfo,
       coins: coinBalance.toFixed(),
     };
+  }
+
+  async infoInternal(telegramId: string, entityManager: EntityManager) {
+    await this.userService.upsertUserByTelegramId(telegramId, entityManager);
+    const user = await this.userService.mustGetUserByTelegramId(telegramId, entityManager);
+    return this.info(user, entityManager);
   }
 }

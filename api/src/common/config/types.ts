@@ -9,7 +9,9 @@ export interface AppConfig {
   game: GameConfig;
   invitation: InvitationConfig;
   task: TaskConfig;
+  campaign: CampaignConfig;
   monitoring: MonitoringConfig;
+  admin: AdminConfig;
 }
 
 export interface RawDatabaseConfig {
@@ -98,4 +100,12 @@ export interface MonitoringConfig {
   metricsNamespace: string;
   region: string;
   env: string;
+}
+
+export interface CampaignConfig {
+  referralCoins: number;
+}
+
+export interface AdminConfig {
+  authToken: SourceValue;
 }

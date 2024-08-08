@@ -133,3 +133,11 @@ monitoring:
   metricsNamespace: Movement-gaming
   region: us-west-1
   env: dev
+
+campaign:
+  referralCoins: 100
+
+admin:
+  authToken:
+    source: use-value
+    value: P@*v#aZKDFsd6XOxPx^A1r0t&wy#vucT

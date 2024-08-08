@@ -93,6 +93,26 @@ module momo_movement::momo {
         });
     }
 
+    public entry fun create_resource_account_and_mint_token(sender: &signer, user_account_hash: string::String, uni_id: string::String, amount: u64) acquires MomoGlobals {
+        only_admin(sender);
+
+        let resource_address = calculate_resource_account_address(user_account_hash);
+
+        let global = borrow_global_mut<MomoGlobals>(@momo_movement);
+        assert!(!table_with_length::contains(&global.resource_account_mapping, resource_address), E_RESOURCE_ACCOUNT_ALREADY_EXIST);
+
+        let user_account_bytes = bcs::to_bytes(&user_account_hash);
+        let (_, resource_signer_cap) = account::create_resource_account(sender, user_account_bytes);
+        table_with_length::add(&mut global.resource_account_mapping, resource_address, resource_signer_cap);
+
+        event::emit_event<ResourceAccountCreateEvent>(&mut global.resource_account_create_events, ResourceAccountCreateEvent {
+            user_account_hash,
+            resource_address,
+        });
+
+        mint_token(sender, resource_address, uni_id, amount);
+    }
+
     #[view]
     public fun try_get_user_resource_account(user_account_hash: string::String): address acquires MomoGlobals {
         let resource_address = calculate_resource_account_address(user_account_hash);

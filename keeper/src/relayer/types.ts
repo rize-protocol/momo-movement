@@ -1,5 +1,6 @@
 export type Command =
   | CreateResourceAccountCommand
+  | CreateResourceAccountAndMintTokenCommand
   | MintTokenCommand
   | TransferTokenCommand
   | ReferralBonusCommand
@@ -8,6 +9,13 @@ export type Command =
 export interface CreateResourceAccountCommand {
   type: 'create_resource_account';
   userAccountHash: string;
+}
+
+export interface CreateResourceAccountAndMintTokenCommand {
+  type: 'create_resource_account_and_mint_token';
+  userAccountHash: string;
+  uniId: string;
+  amount: string;
 }
 
 export interface MintTokenCommand {
