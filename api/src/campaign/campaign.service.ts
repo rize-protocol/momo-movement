@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { CampaignReferral } from 'movement-gaming-model';
+import { CampaignGalxe, CampaignReferral } from 'movement-gaming-model';
 import { EntityManager } from 'typeorm';
 
 import { CampaignConfig } from '@/common/config/types';
@@ -43,5 +43,31 @@ export class CampaignService {
 
   getReferralCoinAmount() {
     return this.referralRewardCoins;
+  }
+
+  async bindGalxeEvmAddress(
+    entityManager: EntityManager,
+    input: { userId: number; telegramId: string; evmAddress: string },
+  ) {
+    const { userId, telegramId, evmAddress } = input;
+
+    const exist = await entityManager.findOneBy(CampaignGalxe, { userId });
+    if (exist) {
+      await entityManager.update(CampaignGalxe, { userId }, { evmAddress });
+    } else {
+      await entityManager.insert(CampaignGalxe, { userId, telegramId, evmAddress, extra: '' });
+    }
+  }
+
+  async galxeCheck(entityManager: EntityManager, evmAddress: string) {
+    checkBadRequest(!!evmAddress, 'invalid evm address');
+    const exist = await entityManager.existsBy(CampaignGalxe, { evmAddress });
+    return { is_ok: exist };
+  }
+
+  async secure3Check(entityManager: EntityManager, telegramId: string) {
+    checkBadRequest(!!telegramId, 'invalid telegramId');
+    const exist = await entityManager.existsBy(CampaignGalxe, { telegramId });
+    return { is_ok: exist };
   }
 }
