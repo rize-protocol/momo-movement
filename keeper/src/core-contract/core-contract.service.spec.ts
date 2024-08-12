@@ -8,6 +8,7 @@ import {
 import { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import BigNumber from 'bignumber.js';
+import { SHA224 } from 'crypto-js';
 import { nanoid } from 'nanoid';
 
 import { CommonModule } from '@/common/common.module';
@@ -61,6 +62,55 @@ describe('coreContractService test', () => {
 
   afterAll(async () => {
     await app.close();
+  });
+
+  function generateUserAccountHash(telegramId: string) {
+    const rawData = { type: 'telegram', telegramId };
+    const encodedData = JSON.stringify(rawData);
+    return SHA224(encodedData).toString();
+  }
+
+  it('simple table test', async () => {
+    const contractAddr = '0xec4d85e1ff8143a47a932dc9c5aa2494c3b3c66dbf186a026c6f42f67ab05987';
+    const telegramId = Math.floor(new Date().getTime() / 1000).toString();
+    const accountHash = generateUserAccountHash(telegramId);
+    console.log(`telegramId: ${telegramId}, accountHash: ${accountHash}`);
+
+    const tx1 = await aptos.transaction.build.simple({
+      sender: contractAddr,
+      data: {
+        function: `${contractAddr}::momo::create_account`,
+        functionArguments: [accountHash],
+      },
+    });
+
+    const committedTxn1 = await walletService.adminSignAndSubmitTransaction(tx1);
+    await walletService.waitForTransaction(committedTxn1.hash);
+    console.log(`done1: ${committedTxn1.hash}`);
+
+    const uniId = nanoid();
+    const mintAmount = new BigNumber(100);
+    const mintAmountInWei = mintAmount.times(10 ** 6).toFixed();
+    const tx2 = await aptos.transaction.build.simple({
+      sender: contractAddr,
+      data: {
+        function: `${contractAddr}::momo::mint_token`,
+        functionArguments: [accountHash, uniId, mintAmountInWei],
+      },
+    });
+
+    const committedTxn2 = await walletService.adminSignAndSubmitTransaction(tx2);
+    await walletService.waitForTransaction(committedTxn2.hash);
+    console.log(`done2: ${committedTxn2.hash}`);
+
+    const [balanceRes] = await aptos.view({
+      payload: {
+        function: `${contractAddr}::momo::momo_balance`,
+        functionArguments: [accountHash],
+      },
+    });
+    const balance = new BigNumber(balanceRes as string).div(10 ** 6);
+    console.log(`balance: ${balance.toFixed()}`);
   });
 
   it('create resource account', async () => {
@@ -212,6 +262,23 @@ describe('coreContractService test', () => {
 
     const exist = await coreContractService.resourceAccountExists(resourceAccount!);
     expect(exist).toBeTruthy();
+  });
+
+  it('fund account', async () => {
+    const configService = app.get<ConfigService>(ConfigService);
+    const operatorList = configService.get<SourceValue[]>('operator-list');
+    if (!operatorList || operatorList.length === 0) {
+      throw new Error('operator list config not found');
+    }
+    for (let i = 0; i < operatorList.length; i++) {
+      const operator = operatorList[i];
+
+      const privateKey = new Ed25519PrivateKey(operator.value);
+      const operatorAccount = Account.fromPrivateKey({ privateKey });
+
+      await aptos.fundAccount({ accountAddress: operatorAccount.accountAddress, amount: 100000000000 });
+      console.log(`${operatorAccount.accountAddress}`);
+    }
   });
 
   it('add operator', async () => {
