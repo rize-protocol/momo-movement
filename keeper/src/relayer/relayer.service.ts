@@ -179,16 +179,14 @@ export class RelayerService {
       ]),
     ];
     const failedTxCount = txs.length - success;
-    if (failedTxCount > 0) {
-      metrics.push(
-        this.metricsService.createMetricData('totalTransactions', failedTxCount, StandardUnit.Count, [
-          {
-            Name: 'success',
-            Value: 'false',
-          },
-        ]),
-      );
-    }
+    metrics.push(
+      this.metricsService.createMetricData('totalTransactions', failedTxCount, StandardUnit.Count, [
+        {
+          Name: 'success',
+          Value: 'false',
+        },
+      ]),
+    );
     await this.metricsService.putMetrics(metrics);
 
     this.logger.log(`[handleRelayToken] done`);
