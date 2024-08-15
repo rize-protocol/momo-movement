@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { User } from 'movement-gaming-model';
 import { EntityManager } from 'typeorm';
 
+import { CampaignService } from '@/campaign/campaign.service';
 import { CoreContractService } from '@/core-contract/core-contract.service';
 import { GameService } from '@/game/game.service';
 import { InvitationService } from '@/invitation/invitation.service';
@@ -15,12 +16,14 @@ export class OverviewService {
     private readonly gameService: GameService,
     private readonly invitationService: InvitationService,
     private readonly coreContractService: CoreContractService,
+    private readonly campaignService: CampaignService,
   ) {}
 
   async info(user: User, entityManager: EntityManager): Promise<OverviewInfoResponse> {
     const gameInfo = await this.gameService.getPlayInfo(user, entityManager);
     const invitationInfo = await this.invitationService.getUserInvitationInfo(user, entityManager);
     const coinBalance = await this.coreContractService.momoBalance(user.resourceAddress);
+    const evmAddress = await this.campaignService.getUserEvmAddress(user.id!, entityManager);
 
     return {
       user: {
@@ -31,6 +34,7 @@ export class OverviewService {
       game: gameInfo,
       invitation: invitationInfo,
       coins: coinBalance.toFixed(),
+      evmAddress,
     };
   }
 

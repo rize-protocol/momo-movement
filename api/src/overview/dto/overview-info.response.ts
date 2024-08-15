@@ -9,6 +9,8 @@ export class OverviewInfoResponse {
   invitation: UserInvitationInfo;
 
   coins: string;
+
+  evmAddress: string;
 }
 
 export class UserInfo {
