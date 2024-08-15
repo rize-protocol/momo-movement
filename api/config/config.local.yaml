@@ -15,7 +15,7 @@ redis:
   port: 6379
 
 telegram:
-  botToken: 7247785922:AAENaaIib6wDDJG_B5zsPkANjyy6QHchqI8
+  botToken: 6689153710:AAHVDcxHmD1LBZPYvpCbl-2d3kwBSZk6nh4
 
 secret-manager:
   region: us-west-1
@@ -141,3 +141,13 @@ admin:
   authToken:
     source: use-value
     value: P@*v#aZKDFsd6XOxPx^A1r0t&wy#vucT
+
+galxe:
+  getAccessTokenUrl: https://api.galxe.com/oauth/auth/2/token
+  getUserInfoUrl: https://api.galxe.com/oauth/api/2/user?scope=Telegram EVMAddress
+  clientId:
+    source: secret-manager
+    value: galxe-momo-client-id
+  clientSecret:
+    source: secret-manager
+    value: galxe-momo-client-secret

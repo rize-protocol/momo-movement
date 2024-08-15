@@ -46,6 +46,11 @@ export class RelayerService {
     }
     this.commandAccountRedisKey = relayerConfig.commandAccountRedisKey;
     this.commandTokenRedisKey = relayerConfig.commandTokenRedisKey;
+
+    process.on('unhandledRejection', (reason, promise) => {
+      console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+      process.exit(0);
+    });
   }
 
   @Cron(CronExpression.EVERY_SECOND)
@@ -62,6 +67,8 @@ export class RelayerService {
 
     try {
       await this.handleRelayAccount();
+    } catch (e) {
+      this.logger.log(`[cronRelayAccount] error: ${e}`);
     } finally {
       this.isAccountRunning = false;
     }
@@ -76,6 +83,8 @@ export class RelayerService {
 
     try {
       await this.handleRelayToken();
+    } catch (e) {
+      this.logger.log(`[cronRelayToken] error: ${e}`);
     } finally {
       this.isTokenRunning = false;
     }
@@ -134,7 +143,7 @@ export class RelayerService {
   }
 
   private async handleRelayToken() {
-    const batch = 100;
+    const batch = 10;
     const txs: InputGenerateTransactionPayloadData[] = [];
     for (let i = 0; i < batch; i++) {
       const commandStr = await this.redisService.lpop(this.commandTokenRedisKey);

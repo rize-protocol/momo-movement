@@ -12,6 +12,7 @@ export interface AppConfig {
   campaign: CampaignConfig;
   monitoring: MonitoringConfig;
   admin: AdminConfig;
+  galxe: GalxeConfig;
 }
 
 export interface RawDatabaseConfig {
@@ -108,4 +109,11 @@ export interface CampaignConfig {
 
 export interface AdminConfig {
   authToken: SourceValue;
+}
+
+export interface GalxeConfig {
+  getAccessTokenUrl: string;
+  getUserInfoUrl: string;
+  clientId: SourceValue;
+  clientSecret: SourceValue;
 }

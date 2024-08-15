@@ -141,3 +141,13 @@ admin:
   authToken:
     source: use-value
     value: P@*v#aZKDFsd6XOxPx^A1r0t&wy#vucT
+
+galxe:
+  getAccessTokenUrl: https://api.galxe.com/oauth/auth/2/token
+  getUserInfoUrl: https://api.galxe.com/oauth/api/2/user?scope=Telegram EVMAddress
+  clientId:
+    source: secret-manager
+    value: galxe-momo-client-id
+  clientSecret:
+    source: secret-manager
+    value: galxe-momo-client-secret
