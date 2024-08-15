@@ -25,23 +25,23 @@ export class CampaignController {
   @Post('bind_referral_internal')
   async bindReferralInternal(@Body() request: BindReferralInternalRequest) {
     await this.entityManager.transaction(async (entityManager) => {
-      await this.campaignService.bindReferralCode(request.referralCode, entityManager);
+      await this.campaignService.bindReferralCodeInternal(request.referralCode, entityManager);
     });
   }
 
   @Admin()
   @Get('referral_list_internal')
   async referralListInternal() {
-    return this.campaignService.referralList(this.entityManager);
+    return this.campaignService.referralListInternal(this.entityManager);
   }
 
   @Post('bind_galxe')
-  async play(@CurrentUser() user: User, @Body() request: BindGalxeRequest) {
+  async bindGalxe(@CurrentUser() user: User, @Body() request: BindGalxeRequest) {
     await this.entityManager.transaction(async (entityManager) => {
       await this.campaignService.bindGalxeEvmAddress(entityManager, {
         userId: user.id!,
         telegramId: user.telegramId,
-        evmAddress: request.evmAddress,
+        code: request.code,
       });
     });
   }
