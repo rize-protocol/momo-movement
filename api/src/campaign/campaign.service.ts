@@ -50,6 +50,7 @@ export class CampaignService {
     input: { userId: number; telegramId: string; evmAddress: string },
   ) {
     const { userId, telegramId, evmAddress } = input;
+    checkBadRequest(!!evmAddress, 'invalid evm address');
 
     const exist = await entityManager.findOneBy(CampaignGalxe, { userId });
     if (exist) {
@@ -57,6 +58,11 @@ export class CampaignService {
     } else {
       await entityManager.insert(CampaignGalxe, { userId, telegramId, evmAddress, extra: '' });
     }
+  }
+
+  async getUserEvmAddress(userId: number, entityManager: EntityManager) {
+    const exist = await entityManager.findOneBy(CampaignGalxe, { userId });
+    return exist?.evmAddress ?? '';
   }
 
   async galxeCheck(entityManager: EntityManager, evmAddress: string) {
