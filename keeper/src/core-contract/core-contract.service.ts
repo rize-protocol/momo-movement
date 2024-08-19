@@ -258,4 +258,36 @@ export class CoreContractService {
       },
     });
   }
+
+  async removeOperator(input: { sender: string | AccountAddressInput; operator: string | AccountAddressInput }) {
+    const { sender, operator } = input;
+    return this.aptos.transaction.build.simple({
+      sender,
+      data: {
+        function: `${this.contractId}::role::remove_operator`,
+        functionArguments: [operator],
+      },
+    });
+  }
+
+  async transferAdmin(input: { sender: string | AccountAddressInput; newAdmin: string }) {
+    const { sender, newAdmin } = input;
+    return this.aptos.transaction.build.simple({
+      sender,
+      data: {
+        function: `${this.contractId}::role::transfer_admin`,
+        functionArguments: [newAdmin],
+      },
+    });
+  }
+
+  async acceptAdmin(sender: string | AccountAddressInput) {
+    return this.aptos.transaction.build.simple({
+      sender,
+      data: {
+        function: `${this.contractId}::role::accept_admin`,
+        functionArguments: [],
+      },
+    });
+  }
 }

@@ -28,7 +28,7 @@ core-contract:
   decimals: 6
   adminPrivateKey:
     source: use-value
-    value: '0x96aed780a2db20ba5f02925617b0291591e888c61d99f76d9303339eff0683a8'
+    value: momo-movement-admin-private-key
 
 operator-list:
   - source: secret-manager
