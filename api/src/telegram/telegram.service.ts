@@ -1,19 +1,20 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EntityManager } from 'typeorm';
 
 import { InvitationConfig, TelegramConfig } from '@/common/config/types';
+import { SecretManagerService } from '@/common/services/secret-manager.service';
 import { TelegramUpdate } from '@/telegram/types';
 import { UserService } from '@/user/user.service';
 
 @Injectable()
-export class TelegramService {
-  private readonly invitationConfig: InvitationConfig;
+export class TelegramService implements OnModuleInit {
+  private invitationConfig: InvitationConfig;
 
-  private readonly telegramSendPhotoApiUrl: string;
+  private telegramSendPhotoApiUrl: string;
 
-  private readonly telegramBotToken: string;
+  private telegramBotToken: string;
 
   private readonly logger = new Logger(TelegramService.name);
 
@@ -21,12 +22,19 @@ export class TelegramService {
     private readonly configService: ConfigService,
     private readonly userService: UserService,
     private readonly httpService: HttpService,
-  ) {
+    private readonly secretManagerService: SecretManagerService,
+  ) {}
+
+  async onModuleInit() {
     const telegramConfig = this.configService.get<TelegramConfig>('telegram');
     if (!telegramConfig) {
       throw new Error('telegram config not found');
     }
-    this.telegramBotToken = telegramConfig.botToken;
+    const telegramBotToken = await this.secretManagerService.getConfigValue(telegramConfig.botToken);
+    if (!telegramBotToken) {
+      throw new Error('telegram token not found');
+    }
+    this.telegramBotToken = telegramBotToken;
 
     const invitationConfig = this.configService.get<InvitationConfig>('invitation');
     if (!invitationConfig) {
