@@ -13,6 +13,7 @@ import { nanoid } from 'nanoid';
 
 import { CommonModule } from '@/common/common.module';
 import { SourceValue } from '@/common/config/types';
+import { SecretManagerService } from '@/common/services/secret-manager.service';
 import { TimeService } from '@/common/services/time.service';
 import { CoreContractModule } from '@/core-contract/core-contract.module';
 import { CoreContractService } from '@/core-contract/core-contract.service';
@@ -30,6 +31,7 @@ describe('coreContractService test', () => {
   let coreContractService: CoreContractService;
   let walletService: WalletService;
   let timeService: TimeService;
+  let secretManagerService: SecretManagerService;
 
   beforeAll(async () => {
     const res = await TestHelper.build({
@@ -57,6 +59,10 @@ describe('coreContractService test', () => {
     timeService = app.get<TimeService>(TimeService);
     if (!timeService) {
       throw new Error('Failed to initialize TimeService');
+    }
+    secretManagerService = app.get<SecretManagerService>(SecretManagerService);
+    if (!secretManagerService) {
+      throw new Error('Failed to initialize SecretManagerService');
     }
   });
 
@@ -291,7 +297,11 @@ describe('coreContractService test', () => {
     for (let i = 0; i < operatorList.length; i++) {
       const operator = operatorList[i];
 
-      const privateKey = new Ed25519PrivateKey(operator.value);
+      const privateKeyStr = await secretManagerService.getConfigValue(operator);
+      if (!privateKeyStr) {
+        throw new Error(`invalid private key, id: ${i}`);
+      }
+      const privateKey = new Ed25519PrivateKey(privateKeyStr);
       const operatorAccount = Account.fromPrivateKey({ privateKey });
 
       // const tx = await coreContractService.addOperator({
