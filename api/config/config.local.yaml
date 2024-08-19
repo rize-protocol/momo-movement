@@ -15,7 +15,9 @@ redis:
   port: 6379
 
 telegram:
-  botToken: 6689153710:AAHVDcxHmD1LBZPYvpCbl-2d3kwBSZk6nh4
+  botToken:
+    source: secret-manager
+    value: momo-movement-telegram-token
 
 secret-manager:
   region: us-west-1

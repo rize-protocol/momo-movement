@@ -25,7 +25,7 @@ export interface RawDatabaseConfig {
 }
 
 export interface TelegramConfig {
-  botToken: string;
+  botToken: SourceValue;
 }
 
 export enum SourceType {

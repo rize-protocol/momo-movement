@@ -23,7 +23,11 @@ export class AuthService implements OnModuleInit {
     if (!telegramConfig) {
       throw new Error('telegram config not found');
     }
-    this.telegramBotToken = telegramConfig.botToken;
+    const telegramBotToken = await this.secretManagerService.getConfigValue(telegramConfig.botToken);
+    if (!telegramBotToken) {
+      throw new Error('telegram token not found');
+    }
+    this.telegramBotToken = telegramBotToken;
 
     const authConfig = this.configService.get<AdminConfig>('admin');
     if (!authConfig) {
