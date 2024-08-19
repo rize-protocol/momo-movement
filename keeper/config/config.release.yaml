@@ -27,7 +27,7 @@ core-contract:
   contractId: '0xd697cbe1d0ab95d9c79f847ee7a075db6e5d99196328785ff354fcbda7e28652'
   decimals: 6
   adminPrivateKey:
-    source: use-value
+    source: secret-manager
     value: momo-movement-admin-private-key
 
 operator-list:
