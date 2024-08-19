@@ -304,7 +304,7 @@ describe('coreContractService test', () => {
       const privateKey = new Ed25519PrivateKey(privateKeyStr);
       const operatorAccount = Account.fromPrivateKey({ privateKey });
 
-      // const tx = await coreContractService.addOperator({
+      // const tx = await coreContractService.removeOperator({
       //   sender: walletService.admin.accountAddress,
       //   operator: operatorAccount.accountAddress,
       // });
@@ -323,5 +323,23 @@ describe('coreContractService test', () => {
     console.log(acc.accountAddress.toString());
     console.log(acc.privateKey.toString());
     await aptos.faucet.fundAccount({ accountAddress: acc.accountAddress, amount: 10 * 1e8 });
+  });
+
+  it('transfer admin', async () => {
+    const x = new Ed25519PrivateKey('0x7b23229718b3d9ce71f6b317f825053a71a15789793413ac087bf79ba8054b76');
+    const acc = Account.fromPrivateKey({ privateKey: x });
+
+    const tx = await coreContractService.transferAdmin({
+      sender: walletService.admin.accountAddress,
+      newAdmin: acc.accountAddress.toString(),
+    });
+    const committedTxn = await walletService.adminSignAndSubmitTransaction(tx);
+    await walletService.waitForTransaction(committedTxn.hash);
+    console.log(`transfer admin hash: ${committedTxn.hash} done`);
+
+    const tx1 = await coreContractService.acceptAdmin(acc.accountAddress.toString());
+    const committedTxn1 = await aptos.signAndSubmitTransaction({ signer: acc, transaction: tx1 });
+    await walletService.waitForTransaction(committedTxn1.hash);
+    console.log(`accept admin hash: ${committedTxn1.hash} done`);
   });
 });
