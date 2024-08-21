@@ -146,7 +146,7 @@ admin:
 
 galxe:
   getAccessTokenUrl: https://api.galxe.com/oauth/auth/2/token
-  getUserInfoUrl: https://api.galxe.com/oauth/api/2/user?scope=Telegram EVMAddress
+  getUserInfoUrl: https://api.galxe.com/oauth/api/2/user?scope=EVMAddress
   clientId:
     source: secret-manager
     value: galxe-momo-client-id
