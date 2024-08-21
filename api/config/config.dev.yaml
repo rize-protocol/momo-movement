@@ -52,57 +52,57 @@ invitation:
     1:
       level: 1
       memberNums: 2
-      rewardCoins: 300
+      rewardCoins: 3000
       rewardPlays: 3
     2:
       level: 2
       memberNums: 3
-      rewardCoins: 300
+      rewardCoins: 3000
       rewardPlays: 3
     3:
       level: 3
       memberNums: 5
-      rewardCoins: 300
+      rewardCoins: 3000
       rewardPlays: 3
     4:
       level: 4
       memberNums: 7
-      rewardCoins: 600
+      rewardCoins: 6000
       rewardPlays: 3
     5:
       level: 5
       memberNums: 10
-      rewardCoins: 600
+      rewardCoins: 6000
       rewardPlays: 3
     6:
       level: 6
       memberNums: 13
-      rewardCoins: 900
+      rewardCoins: 9000
       rewardPlays: 3
     7:
       level: 7
       memberNums: 16
-      rewardCoins: 900
+      rewardCoins: 9000
       rewardPlays: 3
     8:
       level: 8
       memberNums: 20
-      rewardCoins: 900
+      rewardCoins: 9000
       rewardPlays: 5
     9:
       level: 9
       memberNums: 25
-      rewardCoins: 1200
+      rewardCoins: 12000
       rewardPlays: 5
     10:
       level: 10
       memberNums: 30
-      rewardCoins: 1500
+      rewardCoins: 15000
       rewardPlays: 5
     11:
       level: 11
       memberNums: 35
-      rewardCoins: 1500
+      rewardCoins: 15000
       rewardPlays: 5
   targetMemberNumsStep: 5
   targetRewardCoinsStep: 0
@@ -113,22 +113,27 @@ task:
     - taskId: 1
       taskName: Follow Rize Twitter
       taskLink: https://twitter.com/RIZE_Fi
-      rewardCoins: 300
+      rewardCoins: 3000
       rewardPlays: 1
     - taskId: 2
       taskName: Join Rize Telegram Announcement
       taskLink: https://t.me/RIZE_Fi
-      rewardCoins: 300
+      rewardCoins: 3000
       rewardPlays: 1
     - taskId: 3
       taskName: Join Rize Telegram Channel
       taskLink: https://t.me/RIZEFI_Official
-      rewardCoins: 300
+      rewardCoins: 3000
       rewardPlays: 1
     - taskId: 4
       taskName: Check out Rize Galxe
       taskLink: https://app.galxe.com/
-      rewardCoins: 300
+      rewardCoins: 3000
+      rewardPlays: 1
+    - taskId: 5
+      taskName: Check out Rize Galxe
+      taskLink: https://galxe.com/oauth?client_id=d6f2cbe50f818f64a14f0a1e7304b99d917a985845b4f2d11546d79ca735b3bc&scope=EVMAddress&redirect_uri=https://momo.rizefi.io/campaign/galxe_redirect
+      rewardCoins: 3000
       rewardPlays: 1
 
 monitoring:
