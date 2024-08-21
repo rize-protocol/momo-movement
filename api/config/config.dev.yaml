@@ -131,7 +131,7 @@ task:
       rewardCoins: 3000
       rewardPlays: 1
     - taskId: 5
-      taskName: Check out Rize Galxe
+      taskName: Bind Galxe
       taskLink: https://galxe.com/oauth?client_id=d6f2cbe50f818f64a14f0a1e7304b99d917a985845b4f2d11546d79ca735b3bc&scope=EVMAddress&redirect_uri=https://momo.rizefi.io/campaign/galxe_redirect
       rewardCoins: 3000
       rewardPlays: 1
