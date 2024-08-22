@@ -8,8 +8,6 @@ export class OverviewInfoResponse {
 
   invitation: UserInvitationInfo;
 
-  coins: string;
-
   evmAddress: string;
 }
 
