@@ -22,7 +22,6 @@ export class OverviewService {
   async info(user: User, entityManager: EntityManager): Promise<OverviewInfoResponse> {
     const gameInfo = await this.gameService.getPlayInfo(user, entityManager);
     const invitationInfo = await this.invitationService.getUserInvitationInfo(user, entityManager);
-    const coinBalance = await this.coreContractService.momoBalance(user.resourceAddress);
     const evmAddress = await this.campaignService.getUserEvmAddress(user.id!, entityManager);
 
     return {
@@ -33,7 +32,6 @@ export class OverviewService {
       },
       game: gameInfo,
       invitation: invitationInfo,
-      coins: coinBalance.toFixed(),
       evmAddress,
     };
   }
