@@ -8,6 +8,7 @@ import { EntityManager } from 'typeorm';
 import { CampaignConfig, GalxeConfig } from '@/common/config/types';
 import { SecretManagerService } from '@/common/services/secret-manager.service';
 import { checkBadRequest } from '@/common/utils/check';
+import { GameService } from '@/game/game.service';
 import { InvitationService } from '@/invitation/invitation.service';
 
 @Injectable()
@@ -25,6 +26,7 @@ export class CampaignService implements OnModuleInit {
   constructor(
     private readonly configService: ConfigService,
     private readonly invitationService: InvitationService,
+    private readonly gameService: GameService,
     private readonly secretManagerService: SecretManagerService,
     private readonly httpService: HttpService,
   ) {}
@@ -101,10 +103,20 @@ export class CampaignService implements OnModuleInit {
     return exist?.evmAddress ?? '';
   }
 
-  async galxeCheck(entityManager: EntityManager, evmAddress: string) {
+  async galxeUserExist(entityManager: EntityManager, evmAddress: string) {
     checkBadRequest(!!evmAddress, 'invalid evm address');
     const exist = await entityManager.existsBy(CampaignGalxe, { evmAddress });
     return { is_ok: exist };
+  }
+
+  async galxeCheckActivity(entityManager: EntityManager, evmAddress: string) {
+    checkBadRequest(!!evmAddress, 'invalid evm address');
+    const existUser = await entityManager.findOneBy(CampaignGalxe, { evmAddress });
+    if (!existUser) {
+      return { is_ok: false };
+    }
+    const existActivity = await this.gameService.userHasPlayedBefore(existUser.userId, entityManager);
+    return { is_ok: existActivity };
   }
 
   async secure3Check(entityManager: EntityManager, telegramId: string) {

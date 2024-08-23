@@ -120,6 +120,10 @@ export class GameService {
     await entityManager.save(gamePlay);
   }
 
+  async userHasPlayedBefore(userId: number, entityManager: EntityManager) {
+    return entityManager.existsBy(GamePlayHistory, { userId });
+  }
+
   async initPlay(user: User, entityManager: EntityManager) {
     const gamePlay: GamePlay = {
       userId: user.id!,
