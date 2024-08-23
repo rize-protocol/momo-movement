@@ -1,10 +1,11 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity({ name: 'game_play_history' })
 export class GamePlayHistory {
   @PrimaryGeneratedColumn()
   id?: number;
 
+  @Index()
   @Column()
   userId: number;
 

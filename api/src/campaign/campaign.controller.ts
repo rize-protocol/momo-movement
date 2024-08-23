@@ -47,9 +47,15 @@ export class CampaignController {
   }
 
   @Public()
-  @Get('galxe_check')
-  async galxeCheck(@Query() request: CheckGalxeAddressRequest) {
-    return this.campaignService.galxeCheck(this.entityManager, request.address);
+  @Get('galxe_user_exist')
+  async galxeUserExist(@Query() request: CheckGalxeAddressRequest) {
+    return this.campaignService.galxeUserExist(this.entityManager, request.address);
+  }
+
+  @Public()
+  @Get('galxe_check_activity')
+  async galxeCheckActivity(@Query() request: CheckGalxeAddressRequest) {
+    return this.campaignService.galxeCheckActivity(this.entityManager, request.address);
   }
 
   @Public()
