@@ -125,6 +125,12 @@ export class CampaignService implements OnModuleInit {
     return { is_ok: exist };
   }
 
+  async intractCheck(entityManager: EntityManager, telegramId: string) {
+    checkBadRequest(!!telegramId, 'invalid telegramId');
+    const existActivity = await this.gameService.userHasPlayedBeforeByTelegramId(telegramId, entityManager);
+    return { is_ok: existActivity };
+  }
+
   private async mustGetGalxeAccessToken(code: string) {
     let accessToken: string;
     try {

@@ -124,6 +124,10 @@ export class GameService {
     return entityManager.existsBy(GamePlayHistory, { userId });
   }
 
+  async userHasPlayedBeforeByTelegramId(telegramId: string, entityManager: EntityManager) {
+    return entityManager.existsBy(GamePlayHistory, { telegramId });
+  }
+
   async initPlay(user: User, entityManager: EntityManager) {
     const gamePlay: GamePlay = {
       userId: user.id!,
