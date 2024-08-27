@@ -113,27 +113,27 @@ task:
     - taskId: 1
       taskName: Follow Rize Twitter
       taskLink: https://twitter.com/RIZE_Fi
-      rewardCoins: 3000
+      rewardCoins: 300
       rewardPlays: 1
     - taskId: 2
       taskName: Join Rize Telegram Announcement
       taskLink: https://t.me/RIZE_Fi
-      rewardCoins: 3000
+      rewardCoins: 300
       rewardPlays: 1
     - taskId: 3
       taskName: Join Rize Telegram Channel
       taskLink: https://t.me/RIZEFI_Official
-      rewardCoins: 3000
+      rewardCoins: 300
       rewardPlays: 1
     - taskId: 4
       taskName: Check out Rize Galxe
       taskLink: https://app.galxe.com/
-      rewardCoins: 3000
+      rewardCoins: 300
       rewardPlays: 1
     - taskId: 5
       taskName: Bind Galxe
       taskLink: https://galxe.com/oauth?client_id=d6f2cbe50f818f64a14f0a1e7304b99d917a985845b4f2d11546d79ca735b3bc&scope=EVMAddress&redirect_uri=https://momo.rizefi.io/campaign/galxe_redirect
-      rewardCoins: 3000
+      rewardCoins: 300
       rewardPlays: 1
 
 monitoring:
