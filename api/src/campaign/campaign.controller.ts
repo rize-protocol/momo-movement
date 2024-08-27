@@ -7,6 +7,7 @@ import { CampaignService } from '@/campaign/campaign.service';
 import { BindGalxeRequest } from '@/campaign/dto/bind-galxe.request';
 import { BindReferralInternalRequest } from '@/campaign/dto/bind-referral-internal.request';
 import { CheckGalxeAddressRequest } from '@/campaign/dto/check-galxe-address.request';
+import { CheckIntractRequest } from '@/campaign/dto/check-Intract.request';
 import { CheckSecure3Request } from '@/campaign/dto/check-secure3.request';
 import { RedirectGalxeRequest } from '@/campaign/dto/redirect-galxe.request';
 import { Admin, Public } from '@/common/decorators/auth.decorator';
@@ -72,5 +73,11 @@ export class CampaignController {
   @Get('secure3_check')
   async secure3Check(@Query() request: CheckSecure3Request) {
     return this.campaignService.secure3Check(this.entityManager, request.telegramId);
+  }
+
+  @Public()
+  @Post('intract_check')
+  async intractCheck(@Body() request: CheckIntractRequest) {
+    return this.campaignService.intractCheck(this.entityManager, request.telegram);
   }
 }
