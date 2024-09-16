@@ -1,6 +1,6 @@
 database:
   name: movement_gaming_release
-  host: momo-movement-production.cluster-caos3ssocrx6.us-west-1.rds.amazonaws.com
+  host: momo-movement-slim.cluster-caos3ssocrx6.us-west-1.rds.amazonaws.com
   port: 3306
   username:
     source: secret-manager
