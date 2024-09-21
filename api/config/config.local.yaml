@@ -110,24 +110,19 @@ invitation:
 
 task:
   list:
-    - taskId: 1
-      taskName: Follow Rize Twitter
-      taskLink: https://twitter.com/RIZE_Fi
+    - taskId: 6
+      taskName: Follow Momo Twitter
+      taskLink: https://x.com/CultofMOMO
       rewardCoins: 300
       rewardPlays: 1
-    - taskId: 2
-      taskName: Join Rize Telegram Announcement
-      taskLink: https://t.me/RIZE_Fi
+    - taskId: 7
+      taskName: Join Momo Discord
+      taskLink: https://discord.gg/xCpW8BA3Ev
       rewardCoins: 300
       rewardPlays: 1
-    - taskId: 3
-      taskName: Join Rize Telegram Channel
-      taskLink: https://t.me/RIZEFI_Official
-      rewardCoins: 300
-      rewardPlays: 1
-    - taskId: 4
-      taskName: Check out Rize Galxe
-      taskLink: https://app.galxe.com/
+    - taskId: 8
+      taskName: Check out Momo Galxe
+      taskLink: https://app.galxe.com/quest/momo
       rewardCoins: 300
       rewardPlays: 1
     - taskId: 5
