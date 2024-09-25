@@ -52,7 +52,7 @@ export class TelegramService implements OnModuleInit {
 
       const chatId = update.message.chat.id;
       const text =
-        'Welcome to MOMO, built by RIZE!\n\n' +
+        'Welcome to MOMO!\n\n' +
         'Playing creates transactions that help to farm the Movement Labs airdrop.\n\n' +
         'Click PLAY to start!!!';
 
@@ -65,10 +65,9 @@ export class TelegramService implements OnModuleInit {
           reply_markup: {
             inline_keyboard: [
               [{ text: '🎮 Play for Airdrop', url: `https://t.me/MomoByRizeBot/momo?startapp=${referralCode}` }],
-              [{ text: 'Announcement', url: 'https://t.me/RIZE_Fi' }],
               [
-                { text: 'Community', url: 'https://t.me/RIZEFI_OFFICIAL' },
-                { text: 'Twitter', url: 'https://x.com/RIZE_Fi' },
+                { text: 'Community', url: 'https://discord.com/invite/xCpW8BA3Ev' },
+                { text: 'Twitter', url: 'https://x.com/CultofMOMO' },
               ],
             ],
           },

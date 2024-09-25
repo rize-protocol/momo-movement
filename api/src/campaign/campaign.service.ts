@@ -1,7 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { CampaignGalxe, CampaignReferral } from 'movement-gaming-model';
+import { CampaignGalxe, CampaignReferral, User } from 'movement-gaming-model';
 import qs from 'qs';
 import { EntityManager } from 'typeorm';
 
@@ -129,6 +129,11 @@ export class CampaignService implements OnModuleInit {
     checkBadRequest(!!telegramId, 'invalid telegramId');
     const existActivity = await this.gameService.userHasPlayedBeforeByTelegramId(telegramId, entityManager);
     return { is_ok: existActivity };
+  }
+
+  async telegramList(entityManager: EntityManager) {
+    const userList = await entityManager.find(User, { order: { id: 'asc' } });
+    return userList.map((user) => user.telegramId);
   }
 
   private async mustGetGalxeAccessToken(code: string) {

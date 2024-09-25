@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query, Redirect } from '@nestjs/common';
+import { Body, Controller, Get, Header, Post, Query, Redirect } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { User } from 'movement-gaming-model';
 import { EntityManager } from 'typeorm';
@@ -79,5 +79,13 @@ export class CampaignController {
   @Post('intract_check')
   async intractCheck(@Body() request: CheckIntractRequest) {
     return this.campaignService.intractCheck(this.entityManager, request.telegram);
+  }
+
+  @Public()
+  @Get('telegram_list')
+  @Header('Content-Type', 'text/plain')
+  async telegramList() {
+    const list = await this.campaignService.telegramList(this.entityManager);
+    return list.join('\n');
   }
 }
