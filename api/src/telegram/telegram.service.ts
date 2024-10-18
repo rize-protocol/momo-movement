@@ -53,7 +53,7 @@ export class TelegramService implements OnModuleInit {
       const chatId = update.message.chat.id;
       const text =
         'Welcome to MOMO!\n\n' +
-        'Playing creates transactions that help to farm the Movement Labs airdrop.\n\n' +
+        'Playing creates transactions on Movement Labs\' incentivized testnet.\n\n' +
         'Click PLAY to start!!!';
 
       try {
