@@ -66,7 +66,7 @@ export class TelegramService implements OnModuleInit {
           parse_mode: 'Markdown',
           reply_markup: {
             inline_keyboard: [
-              [{ text: '🎮 Play for Airdrop', url: `https://t.me/MomoByRizeBot/momo?startapp=${referralCode}` }],
+              [{ text: 'Open app', url: `https://t.me/MomoByRizeBot/momo?startapp=${referralCode}` }],
               [
                 { text: 'Community', url: 'https://discord.com/invite/xCpW8BA3Ev' },
                 { text: 'Twitter', url: 'https://x.com/CultofMOMO' },
