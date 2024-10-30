@@ -97,7 +97,7 @@ curl -F "url=<ngrok-url>" https://api.telegram.org/bot<tg-bot-token>/setWebhook
 For example
 
 ```
-curl -F "url=https://295a-76-132-63-56.ngrok-free.app/telegram/webhook" https://api.telegram.org/bot8195032812:AAHKlZAaOSD3dPFsSOylKSmQ7ojxKKu82rQ/setWebhook
+curl -F "url=https://295a-76-132-63-56.ngrok-free.app/telegram/webhook" https://api.telegram.org/bot81950****u82rQ/setWebhook
 ```
 
 4. Start the nest application, and send the bot /start. You shall be able to see POST request on nest log.
