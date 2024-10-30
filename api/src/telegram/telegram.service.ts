@@ -52,9 +52,11 @@ export class TelegramService implements OnModuleInit {
 
       const chatId = update.message.chat.id;
       const text =
-        'Welcome to MOMO!\n\n' +
-        'Playing creates transactions on Movement Labs\' incentivized testnet.\n\n' +
-        'Click PLAY to start!!!';
+        'MOMO has now concluded on Movement testnet!\n\n' +
+        'If you have played, your score has been collected. Please check back here once mainnet goes live for next steps.\n\n' +
+        'You can keep track of MOMO on our socials:\n\n' +
+        'https://x.com/CultofMOMO\n' +
+        'https://discord.com/invite/xCpW8BA3Ev';
 
       try {
         await this.httpService.axiosRef.post(this.telegramSendPhotoApiUrl, {
