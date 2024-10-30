@@ -71,3 +71,41 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](LICENSE).
+
+## Install
+
+```
+yarn 
+yarn update
+```
+
+## Run on local
+
+1. Create a bot at TG @botfather, obtain the bot token. 
+2. Setup ngrok, and start NGROK
+
+```
+ngrok http 3000
+```
+
+3. Configure bot webhook
+
+```
+curl -F "url=<ngrok-url>" https://api.telegram.org/bot<tg-bot-token>/setWebhook
+```
+
+For example
+
+```
+curl -F "url=https://295a-76-132-63-56.ngrok-free.app/telegram/webhook" https://api.telegram.org/bot8195032812:AAHKlZAaOSD3dPFsSOylKSmQ7ojxKKu82rQ/setWebhook
+```
+
+4. Start the nest application, and send the bot /start. You shall be able to see POST request on nest log.
+
+```
+yarn start:dev
+```
+
+5. Upload a file image in TG, add print message in handling the post request, obtain the file ID. 
+6. Replace the file ID in post message.
+7. Restart the application, you shall be able to see TG bot message. 
