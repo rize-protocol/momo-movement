@@ -1,0 +1,12 @@
+[package]
+name = 'momoMovement'
+version = '0.0.1'
+
+[addresses]
+momo_movement = '0xec4d85e1ff8143a47a932dc9c5aa2494c3b3c66dbf186a026c6f42f67ab05987'
+test_admin = '0xaa'
+test_operator = '0xbb'
+test_attacker = '0xcc'
+
+[dependencies]
+AptosFramework = { git = 'https://github.com/aptos-labs/aptos-core.git', subdir = 'aptos-move/framework/aptos-framework/', rev = 'mainnet' }
